@@ -5,6 +5,7 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
+    "check-types": "turbo check-types",
     "preview": "turbo preview",
     "dist:win": "turbo dist:win",
     "dist:mac": "turbo dist:mac",
@@ -19,5 +20,10 @@
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=18"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "builder-util-runtime@8.9.2": "patches/builder-util-runtime@8.9.2.patch"
+    }
   }
 }

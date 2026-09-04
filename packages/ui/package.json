@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "lint": "biome lint src"
+    "lint": "biome lint src",
+    "check-types": "tsc --noEmit"
   },
   "exports": {
     "./components/*": "./src/components/*.tsx",
@@ -34,7 +35,7 @@
     "@radix-ui/react-toggle": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.4",
     "@types/node": "22.8.6",
-    "@types/react": "^18.0.20",
+    "@types/react": "18.3.18",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.4",

@@ -1,0 +1,19 @@
+diff --git a/out/httpExecutor.d.ts b/out/httpExecutor.d.ts
+index 713a7299497d0bf2cd0125ed39e931136da035aa..fc1ae57ccacd94fa16fdae68d3a00b0f79647d2d 100644
+--- a/out/httpExecutor.d.ts
++++ b/out/httpExecutor.d.ts
+@@ -1,12 +1,12 @@
+ /// <reference types="node" />
+ import { BinaryToTextEncoding } from "crypto";
+-import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http";
++import { IncomingMessage, OutgoingHttpHeader, OutgoingHttpHeaders, RequestOptions } from "http";
+ import { Transform } from "stream";
+ import { URL } from "url";
+ import { CancellationToken } from "./CancellationToken";
+ import { ProgressInfo } from "./ProgressCallbackTransform";
+ export interface RequestHeaders extends OutgoingHttpHeaders {
+-    [key: string]: string;
++    [key: string]: OutgoingHttpHeader | undefined;
+ }
+ export interface DownloadOptions {
+     readonly headers?: OutgoingHttpHeaders | null;

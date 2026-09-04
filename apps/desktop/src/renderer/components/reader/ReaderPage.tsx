@@ -493,9 +493,9 @@ const ReaderPage: React.FC = () => {
       setShowingSettingsModal(!showingSettingsModal),
     );
     Mousetrap.bind(keyToggleShowingSidebar, () => setShowingSidebar(!showingSidebar));
-    Mousetrap.bind(keyToggleFullscreen, () =>
-      ipcRenderer.invoke(ipcChannels.WINDOW.TOGGLE_FULLSCREEN),
-    );
+    Mousetrap.bind(keyToggleFullscreen, () => {
+      ipcRenderer.invoke(ipcChannels.WINDOW.TOGGLE_FULLSCREEN);
+    });
     Mousetrap.bind(keyExit, exitPage);
     Mousetrap.bind(keyCloseOrBack, exitPage);
   };

@@ -74,7 +74,6 @@ export async function downloadAll(
   );
   const chaptersToDownload = queue.filter((chapter) => chapter !== undefined);
   const sortedQueue = chaptersToDownload.sort(
-    // @ts-expect-error undefined filterd out ^
     (a, b) => parseFloat(a.chapterNumber) - parseFloat(b.chapterNumber),
   ) as Chapter[];
 
