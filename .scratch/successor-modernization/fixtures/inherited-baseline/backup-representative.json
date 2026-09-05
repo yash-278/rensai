@@ -1,0 +1,26 @@
+{
+  "library-series-list": "[{\"id\":\"11111111-1111-4111-8111-111111111111\",\"extensionId\":\"9ef3242e-b5a0-4f56-bf2f-5e0c9f6f50ab\",\"sourceId\":\"/SYNTHETIC/Library/星の旅 — Volume 1\",\"title\":\"星の旅 — Volume 1\",\"altTitles\":[\"Journey of Stars\"],\"description\":\"Synthetic fixture series.\",\"authors\":[\"Fixture Author\"],\"artists\":[\"Fixture Artist\"],\"tags\":[\"Adventure\",\"Slice of Life\"],\"status\":\"Completed\",\"originalLanguageKey\":\"JAPANESE\",\"numberUnread\":99,\"remoteCoverUrl\":\"\",\"trackerKeys\":{\"synthetic-tracker\":\"drop-this-link\"},\"categories\":[\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\"]},{\"id\":\"22222222-2222-4222-8222-222222222222\",\"extensionId\":\"legacy-online-extension\",\"sourceId\":\"remote-series-42\",\"title\":\"Deferred Online Series\",\"altTitles\":[],\"description\":\"Must be reported and skipped without network access.\",\"authors\":[],\"artists\":[],\"tags\":[],\"status\":\"Ongoing\",\"originalLanguageKey\":\"ENGLISH\",\"numberUnread\":1,\"remoteCoverUrl\":\"https://invalid.example/cover.jpg\",\"trackerKeys\":{}}]",
+  "library-chapters-11111111-1111-4111-8111-111111111111": "[{\"id\":\"33333333-3333-4333-8333-333333333333\",\"sourceId\":\"/SYNTHETIC/Library/星の旅 — Volume 1/v1 c1 [Fixture]\",\"title\":\"v1 c1 [Fixture]\",\"chapterNumber\":\"1\",\"volumeNumber\":\"1\",\"languageKey\":\"ENGLISH\",\"groupName\":\"Fixture\",\"time\":1704067200000,\"read\":true},{\"id\":\"44444444-4444-4444-8444-444444444444\",\"sourceId\":\"/SYNTHETIC/Library/星の旅 — Volume 1/v1 c2.cbz\",\"title\":\"v1 c2.cbz\",\"chapterNumber\":\"2\",\"volumeNumber\":\"1\",\"languageKey\":\"ENGLISH\",\"groupName\":\"\",\"time\":1704153600000,\"read\":false}]",
+  "library-chapters-22222222-2222-4222-8222-222222222222": "[{\"id\":\"55555555-5555-4555-8555-555555555555\",\"sourceId\":\"remote-chapter-1\",\"title\":\"Chapter 1\",\"chapterNumber\":\"1\",\"volumeNumber\":\"\",\"languageKey\":\"ENGLISH\",\"groupName\":\"\",\"time\":1704240000000,\"read\":false}]",
+  "library-category-list": "[{\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"label\":\"お気に入り, favourites\"}]",
+  "general-ApplicationTheme": "dark",
+  "general-ChapterLanguages": "ENGLISH,JAPANESE",
+  "general-LibraryView": "GRID_COMFORTABLE",
+  "general-LibrarySort": "UnreadDesc",
+  "general-CustomDownloadsDir": "/SYNTHETIC/Houdoku Downloads",
+  "general-AutoCheckForUpdates": "true",
+  "reader-ReadingDirection": "RightToLeft",
+  "reader-PageStyle": "Double",
+  "reader-FitContainToWidth": "true",
+  "reader-FitContainToHeight": "true",
+  "reader-OffsetPages": "First",
+  "reader-MaxPageWidth": "92",
+  "reader-PageWidthMetric": "%",
+  "reader-KeyPageLeft": "left",
+  "reader-KeyPageRight": "right",
+  "tracker-TrackerAutoUpdate": "true",
+  "integration-DiscordPresenceEnabled": "true",
+  "extension-settings-legacy-online-extension": "{\"endpoint\":\"https://invalid.example\",\"enabled\":true}",
+  "tracker-access-token-synthetic-tracker": "SYNTHETIC_SECRET_MUST_NEVER_BE_IMPORTED_OR_LOGGED"
+}
+
