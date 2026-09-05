@@ -16,7 +16,10 @@
     "check-types": "tsc --noEmit",
     "dist:win": "pnpm electron-builder --publish onTagOrDraft --win",
     "dist:mac": "pnpm electron-builder --publish onTagOrDraft --mac",
-    "dist:linux": "pnpm electron-builder --publish onTagOrDraft --linux"
+    "dist:linux": "pnpm electron-builder --publish onTagOrDraft --linux",
+    "design:preview": "vite --config design-system/vite.config.ts",
+    "design:build": "vite build --config design-system/vite.config.ts",
+    "design:check": "tsc --noEmit --project design-system/tsconfig.json && pnpm design:build && electron design-system/check.cjs && electron design-system/check-search.cjs"
   },
   "build": {
     "productName": "Houdoku",

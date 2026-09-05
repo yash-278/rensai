@@ -49,9 +49,9 @@ app
     await subject.exports.loadPlugins(window);
     assert.deepEqual(invoke(channels.EXTENSION_MANAGER.GET_LOCAL_PROVIDER_STATUS), {
       version: '0.1.0-dev.0',
-      sourceCount: 44,
+      sourceCount: 34,
     });
-    assert.equal(invoke(channels.EXTENSION_MANAGER.GET_ALL).length, 45); // Includes local files.
+    assert.equal(invoke(channels.EXTENSION_MANAGER.GET_ALL).length, 35); // Includes local files.
     const komga = 'b21fcfa9-8b46-439f-b060-31832aaf1931';
     const settings = {
       ...invoke(channels.EXTENSION.GET_SETTINGS, komga),
@@ -69,7 +69,7 @@ app
       },
     });
     assert.equal(restored, true);
-    assert.equal(invoke(channels.EXTENSION_MANAGER.GET_ALL).length, 45);
+    assert.equal(invoke(channels.EXTENSION_MANAGER.GET_ALL).length, 35);
     delete process.env.RENSAI_SOURCES_PATH;
     await subject.exports.loadPlugins(window);
     assert.equal(invoke(channels.EXTENSION_MANAGER.GET_ALL).length, 1);

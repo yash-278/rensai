@@ -62,7 +62,7 @@ test(
     const provider = loadLocalSourceProvider(process.env.RENSAI_SOURCES_PATH, null, require);
     assert.equal(provider.getVersion(), '0.1.0-dev.0');
     const sources = snapshotSourceProvider(provider);
-    assert.equal(Object.keys(sources).length, 44);
+    assert.equal(Object.keys(sources).length, 34);
     assert.equal(sources['6b4e9df1-b369-4adc-8d36-fe954dd793e3'].metadata.name, 'MangaDex');
     assert.equal(sources['b21fcfa9-8b46-439f-b060-31832aaf1931'].metadata.name, 'Komga');
   },

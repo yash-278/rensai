@@ -47,3 +47,9 @@ export const filterValuesMapState = atom<{ [extensionId: string]: FilterValues }
   key: 'searchFilterValuesMapState',
   default: {},
 });
+
+// Browsing density is independent of the Library column preference.
+export const searchCoverDensityState = atom<'comfortable' | 'compact'>({
+  key: 'searchCoverDensityState',
+  default: 'comfortable',
+});

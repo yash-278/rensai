@@ -204,7 +204,7 @@ function search(
 
   return extension.getSearch(text, page, filterValues).catch((err: Error) => {
     console.error(err);
-    return { seriesList: [], hasMore: false };
+    throw err;
   });
 }
 
@@ -224,7 +224,7 @@ function directory(
 
   return extension.getDirectory(page, filterValues).catch((err: Error) => {
     console.error(err);
-    return { seriesList: [], hasMore: false };
+    throw err;
   });
 }
 

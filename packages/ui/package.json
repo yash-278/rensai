@@ -10,7 +10,9 @@
   "exports": {
     "./components/*": "./src/components/*.tsx",
     "./hooks/*": "./src/hooks/*.tsx",
-    "./util": "./src/util.ts"
+    "./util": "./src/util.ts",
+    "./tokens.css": "./src/styles/tokens.css",
+    "./tailwind-preset": "./tailwind-preset.cjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.2",

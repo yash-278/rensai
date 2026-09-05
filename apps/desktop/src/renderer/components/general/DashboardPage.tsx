@@ -85,7 +85,7 @@ const DashboardPage: React.FC<Props> = () => {
       }
     >
       <DashboardSidebar />
-      <div className="px-2 w-full">
+      <div className="px-2 w-full min-w-0">
         <Routes>
           <Route path={`${routes.SERIES}/:id`} element={<SeriesDetails />} />
           <Route path={`${routes.SEARCH}/*`} element={<Search />} />

@@ -1,0 +1,5 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["./*.tsx", "./vite.config.ts", "../src/renderer/d.ts"],
+  "exclude": []
+}

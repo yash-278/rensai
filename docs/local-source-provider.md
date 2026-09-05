@@ -8,7 +8,7 @@ As of 2026-09-05, Rensai Sources is the app's only website-source provider. This
 - Provider: `/Users/yash/Personal/rensai-sources`, branch `rensai-provider`, based on Tiyo commit `84e75a3d6afe73cc698da86a45f45f81f50e067a`.
 - Provider package: `@rensai/sources@0.1.0-dev.0`, private and unpublished.
 
-The provider retains Tiyo's history, MIT license, source interfaces, and existing source IDs. The 44 effective source entries are inherited, not certified working websites.
+The provider retains Tiyo's history, MIT license, and source interfaces. It now has 34 source entries after the ten approved deletion candidates were removed. The remaining source IDs are unchanged; registration alone does not certify website compatibility.
 
 ## Loading rules
 
@@ -47,4 +47,8 @@ The smoke command creates and removes a disposable profile. The `dev:sources` co
 
 ## Next work
 
-Confirm the provider appears in the app, then select website repairs one at a time. No website-specific code was changed for this integration. Bundling the provider for packaged applications, dependency auditing, and automatic source updates remain unfinished.
+The provider now includes website repairs from the [5 September 2026 source audit](../../rensai-sources/docs/source-audit-2026-09-05.md). The audit covers all 44 inherited entries and records 13 sampled HTTP passes. At the user's request, the ten deletion candidates and their implementations have been removed, leaving 34 sources. Existing library data was not deleted or migrated. The provider build and 21 tests, plus the three application loader tests, passed after these repairs. Remaining site-access blockers are listed in the audit.
+
+Rebuild the sibling provider and select **Reload Installed Plugins** to load the changes. Bundling the provider for packaged applications, dependency auditing, and automatic source updates remain unfinished.
+
+nhentai now uses its official v2 API. Generate a key in [nhentai account settings](https://nhentai.net/user/settings#apikeys), then enter it under **Source settings → nhentai → API Key** and select **Save settings**. See the provider’s [setup and verification notes](../../rensai-sources/docs/nhentai-api.md).
