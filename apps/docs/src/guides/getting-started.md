@@ -1,47 +1,46 @@
-# Getting Started
+---
+description: Import your first manga, open a chapter, and configure Rensai's desktop reader.
+---
 
-Houdoku is a desktop manga reader. Read manga from your own collection or use plugins to add from external sources.
+# Getting started
+
+Rensai is a free, open-source desktop manga reader. Read from your own collection or add series from supported websites through Rensai Sources.
 
 ## Installation
 
-1. Get Houdoku from the [download page](/download).
-2. Houdoku will automatically prompt you when an update is available.
+See the [download page](/download) for current release availability and development instructions. Public Rensai installers are not available yet. Some labels in development builds still use the Houdoku name.
 
 ## First steps
 
-Add manga from your filesystem, or install a plugin to discover external content.
-
 :::tabs
-== Local filesystem
-To import your local collection, go to the `Add Series` page and select the `filesystem` source.
-You can import an individual series or an entire collection at once.
+== Local files
 
-For more info, see [Adding from Local Filesystem](./adding-content/filesystem)
-== External sources
-Houdoku allows you to import manga from 3rd-party websites, called "content sources".
-1. **Install a plugin**. Go to the `Plugins` page and install a plugin. Plugins add support for multiple
-content sources.
-2. **Add a series**. Go to the `Add Series` page and select a source from the dropdown. Search for
-a series to add to your library.
+1. Open **Add Series** and select the **filesystem** source.
+2. Choose **Select Directory** and select a series folder. To import several series, enable **Multi-series mode** and choose the folder containing them.
+3. Review the series details, then select **Add series**.
+4. Open the series in **Library** and select a chapter to start reading.
 
-For more info, see [Adding from Websites](./adding-content/websites)
+See [Local files and archives](./adding-content/filesystem) for supported archive formats and folder layouts.
+== Website sources
+
+1. Set up **Rensai Sources** using the [website sources guide](./adding-content/websites).
+2. Open **Add Series**, select a website source, and search for a series.
+3. Add the series to your library, then open it and select a chapter.
+
+Source availability depends on the website. Local files remain available if Rensai Sources is not loaded.
 :::
 
-## Customizing
+## Make it yours
 
-Configure Houdoku from the `Settings` page.
+Open **Settings** to configure the application.
 
-- **General:** Choose a color theme, change the library display and refresh settings, and backup your data. 
-- **Reader:** Switch between single, double, and long-strip layouts, change the image sizing, and edit keybinds. Learn more about customizing the reader.
-- **Trackers:** Sync your reading with tracking websites like AniList and MyAnimeList. Learn more [about trackers](./trackers).
-- **Integrations:** Connect with Discord to sync your status.
+- **General and Library** let you choose a theme, adjust the library display and refresh options, and back up your data.
+- **Reader** offers single-page, double-page, and long-strip layouts, image sizing, reading direction, and keybinds. See [Customize](./customize).
+- **Trackers** connect your reading progress to AniList, MyAnimeList, or MangaUpdates. See [Trackers](./trackers).
+- **Integrations** includes Discord presence settings for sharing your reading status.
 
-## Offline downloading
+## Read offline
 
-You can use Houdoku to download manga. After importing a manga to your library, go to the
-series page and click `Options` -> `Download`. You can also download specific chapters.
+After adding a website series to your library, open its page and select **Options**, then **Download**. You can also download individual chapters.
 
-When reading, Houdoku will automatically use the downloaded version. Manage your downloaded
-chapters and check the download queue from the `Downloads` tab.
-
-See the [Offline Downloading](./offline-download) page for more information.
+The reader uses downloaded chapters when they are available. Open **Downloads** to manage saved chapters and the download queue. See [Offline downloads](./offline-download).

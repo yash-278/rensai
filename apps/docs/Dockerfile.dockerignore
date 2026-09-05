@@ -1,0 +1,16 @@
+**
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!LICENSE.txt
+!patches
+!patches/**
+!apps
+!apps/docs
+!apps/docs/package.json
+!apps/docs/Dockerfile
+!apps/docs/Caddyfile
+!apps/docs/src
+!apps/docs/src/**
+apps/docs/src/.vitepress/cache
+apps/docs/src/.vitepress/dist

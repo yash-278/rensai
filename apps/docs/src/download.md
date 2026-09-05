@@ -1,50 +1,37 @@
 ---
+title: Download
+description: Rensai desktop release availability for Windows, macOS, and Linux.
 editLink: false
 prev: false
 next: false
 ---
 
-<script setup>
-import VPButton from "vitepress/dist/client/theme-default/components/VPButton.vue";
-import { data as release } from '@theme/data/release.data'
-</script>
+# Get Rensai
 
-# Download
+Rensai is in development. There are no public Rensai installers yet.
 
-Houdoku version {{ release.version }} was released on {{ release.releaseDateStr }} ({{ release.releaseDaysAgo }} days ago).
+[Check Rensai releases](https://github.com/yash-278/rensai/releases) for published builds and release notes. When installers are available, this page will list each supported platform and version.
 
-<table class="downloadTable">
-<thead>
-<tr>
-  <th>Platform</th>
-  <th>Download</th>
-  <th>Built</th>
-</tr>
-</thead>
-<tbody>
-<tr v-for="asset in release.assets" :key="asset.platform">
-  <td>{{ asset.platform }}</td>
-  <td><VPButton :href="asset.browser_download_url" :text="asset.name" theme="brand" /></td>
-  <td>{{ asset.buildTimeStr }}</td>
-</tr>
-</tbody>
-</table>
+## Desktop platforms
 
-> Additional versions are available from the [GitHub releases page](https://github.com/xgi/houdoku/releases).
+The inherited desktop application has build targets for Windows, macOS, and Linux. Rensai installers for these platforms have not been published.
 
-## Updating
+| Platform | Rensai download  |
+| -------- | ---------------- |
+| Windows  | Not released yet |
+| macOS    | Not released yet |
+| Linux    | Not released yet |
 
-Houdoku checks for updates automatically when the client starts. You will be prompted when an update is available.
+## Running from source
+
+Developers can follow the [repository's development instructions](https://github.com/yash-278/rensai/tree/rensai#development). The reader and library guides on this site describe the existing desktop functionality. Labels in development builds may still say Houdoku.
+
+Website sources require the separate Rensai Sources development setup. See [website sources](/guides/adding-content/websites) before trying to use them.
+
+## Updates
+
+The inherited application includes automatic update checks. Rensai's release channel and installers are not available yet, so use the Rensai release page for release information. An upstream Houdoku installer or update is not a Rensai release.
 
 ## Next steps
 
-Check the [Getting Started](./guides/getting-started) guide.
-
-
-<style scoped>
-.downloadTable {
-  a {
-    text-decoration: none;
-  }
-}
-</style>
+Read [Getting started](/guides/getting-started) to learn how to import your collection and open your first chapter.
