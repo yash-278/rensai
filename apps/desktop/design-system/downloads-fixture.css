@@ -1,0 +1,46 @@
+.downloads-live-fixture {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  height: calc(100dvh - var(--titlebar-height, 0px));
+  overflow: hidden;
+}
+.downloads-review-nav {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--space-6);
+  border-right: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+}
+.downloads-review-tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: auto;
+}
+@media (max-width: 767px) {
+  .downloads-live-fixture {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .downloads-live-fixture .downloads-page {
+    height: 100%;
+  }
+  .downloads-review-nav {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-4);
+    gap: var(--space-2);
+  }
+  .downloads-review-tools {
+    flex-direction: row;
+    margin: 0;
+    align-items: center;
+  }
+  .downloads-review-nav > p,
+  .downloads-review-nav > nav,
+  .downloads-review-tools > p {
+    display: none;
+  }
+}

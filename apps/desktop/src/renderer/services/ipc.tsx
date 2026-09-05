@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron');
-import { ExtensionMetadata } from '@tiyo/common';
+import { restoreSourceSettings } from './sourceSettings';
 import persistantStore from '@/renderer/util/persistantStore';
 import ipcChannels from '@/common/constants/ipcChannels.json';
 import storeKeys from '@/common/constants/storeKeys.json';
@@ -7,27 +7,12 @@ import { TrackerMetadata } from '@/common/models/types';
 import { UpdateInfo } from 'electron-updater';
 import { toast } from '@houdoku/ui/hooks/use-toast';
 
-export const loadStoredExtensionSettings = () => {
-  console.info('Loading stored extension settings...');
-  return ipcRenderer
-    .invoke(ipcChannels.EXTENSION_MANAGER.GET_ALL)
-    .then((metadataList: ExtensionMetadata[]) => {
-      metadataList.forEach((metadata: ExtensionMetadata) => {
-        const extSettings: string | null = persistantStore.read(
-          `${storeKeys.EXTENSION_SETTINGS_PREFIX}${metadata.id}`,
-        );
-        if (extSettings !== null && extSettings !== 'undefined') {
-          console.debug(`Found stored settings for extension ${metadata.id}`);
-          ipcRenderer.invoke(
-            ipcChannels.EXTENSION.SET_SETTINGS,
-            metadata.id,
-            JSON.parse(extSettings),
-          );
-        }
-      });
+export const loadStoredExtensionSettings = () =>
+  restoreSourceSettings()
+    .then((failed) => {
+      if (failed.length) console.error('Some saved source settings could not be restored.');
     })
-    .catch((e: Error) => console.error(e));
-};
+    .catch(() => console.error('Could not restore saved source settings.'));
 
 export const loadStoredTrackerTokens = () => {
   console.info('Loading stored tracker tokens...');
@@ -53,9 +38,6 @@ export const createRendererIpcHandlers = (
 ) => {
   console.debug('Creating renderer IPC handlers...');
 
-  ipcRenderer.on(ipcChannels.APP.LOAD_STORED_EXTENSION_SETTINGS, () => {
-    loadStoredExtensionSettings();
-  });
   ipcRenderer.on(ipcChannels.WINDOW.SET_FULLSCREEN, (_event, fullscreen) => {
     if (fullscreen) {
       document.getElementById('titlebar')?.classList.add('hidden');

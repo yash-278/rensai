@@ -1,3 +1,11 @@
+import {
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+} from '@houdoku/ui/components/DropdownMenu';
 import React from 'react';
 import { Series } from '@tiyo/common';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
@@ -24,6 +32,7 @@ import {
 import { CheckCheck, Play, Pointer, Tags, Trash2 } from 'lucide-react';
 
 type Props = {
+  dropdown?: boolean;
   series: Series | null;
   showRemoveModal: (series: Series) => void;
 };
@@ -86,44 +95,50 @@ const LibraryGridContextMenu: React.FC<Props> = (props: Props) => {
     setSeriesList(library.fetchSeriesList());
   };
 
+  const MenuCheckboxItem = props.dropdown ? DropdownMenuCheckboxItem : ContextMenuCheckboxItem;
+  const MenuContent = props.dropdown ? DropdownMenuContent : ContextMenuContent;
+  const MenuItem = props.dropdown ? DropdownMenuItem : ContextMenuItem;
+  const MenuSub = props.dropdown ? DropdownMenuSub : ContextMenuSub;
+  const MenuSubContent = props.dropdown ? DropdownMenuSubContent : ContextMenuSubContent;
+  const MenuSubTrigger = props.dropdown ? DropdownMenuSubTrigger : ContextMenuSubTrigger;
   return (
-    <ContextMenuContent className="w-48">
-      <ContextMenuItem onClick={viewFunc}>
+    <MenuContent className="w-48">
+      <MenuItem onClick={viewFunc}>
         <Play className="h-4 w-4 mr-2" />
         View series
-      </ContextMenuItem>
-      <ContextMenuItem onClick={markAllReadFunc}>
+      </MenuItem>
+      <MenuItem onClick={markAllReadFunc}>
         <CheckCheck className="h-4 w-4 mr-2" />
         Mark all read
-      </ContextMenuItem>
-      <ContextMenuItem onClick={multiSelectFunc}>
+      </MenuItem>
+      <MenuItem onClick={multiSelectFunc}>
         <Pointer className="h-4 w-4 mr-2" />
-        Multi-select
-      </ContextMenuItem>
+        Select series
+      </MenuItem>
       {availableCategories.length > 0 && (
-        <ContextMenuSub>
-          <ContextMenuSubTrigger>
+        <MenuSub>
+          <MenuSubTrigger>
             <Tags className="h-4 w-4 mr-2" />
             Categories
-          </ContextMenuSubTrigger>
-          <ContextMenuSubContent className="w-48 max-h-64">
+          </MenuSubTrigger>
+          <MenuSubContent className="w-48 max-h-64">
             {availableCategories.map((category) => (
-              <ContextMenuCheckboxItem
+              <MenuCheckboxItem
                 key={category.id}
                 checked={props.series?.categories?.includes(category.id)}
                 onClick={() => toggleCategory(category.id)}
               >
                 {category.label}
-              </ContextMenuCheckboxItem>
+              </MenuCheckboxItem>
             ))}
-          </ContextMenuSubContent>
-        </ContextMenuSub>
+          </MenuSubContent>
+        </MenuSub>
       )}
-      <ContextMenuItem onClick={removeFunc}>
+      <MenuItem onClick={removeFunc}>
         <Trash2 className="h-4 w-4 mr-2" />
         Remove series
-      </ContextMenuItem>
-    </ContextMenuContent>
+      </MenuItem>
+    </MenuContent>
   );
 };
 

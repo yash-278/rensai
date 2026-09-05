@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ColumnDef,
   flexRender,
@@ -6,41 +7,9 @@ import {
   RowSelectionState,
   useReactTable,
 } from '@tanstack/react-table';
-const { ipcRenderer } = require('electron');
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@houdoku/ui/components/Table';
-import { ChapterTablePagination } from './ChapterTablePagination';
-import {
-  chapterDownloadStatusesState,
-  chapterListState,
-  seriesState,
-  sortedFilteredChapterListState,
-} from '@/renderer/state/libraryStates';
+import { Chapter, Languages, Series } from '@tiyo/common';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  chapterLanguagesState,
-  chapterListChOrderState,
-  chapterListVolOrderState,
-  customDownloadsDirState,
-} from '@/renderer/state/settingStates';
-import { Chapter, Languages, Series } from '@tiyo/common';
-import routes from '@/common/constants/routes.json';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@houdoku/ui/components/DropdownMenu';
-import { Button } from '@houdoku/ui/components/Button';
 import {
   ArrowDown,
   ArrowUp,
@@ -49,401 +18,539 @@ import {
   Eye,
   EyeOff,
   FileCheck,
-  LanguagesIcon,
-  Play,
+  Loader2,
+  MoreHorizontal,
   Settings2,
+  AlertCircle,
+  Clock,
 } from 'lucide-react';
-import { ChapterTableLanguageFilter } from './ChapterTableLanguageFilter';
-import { ChapterTableGroupFilter } from './ChapterTableGroupFilter';
-import { markChapters } from '@/renderer/features/library/utils';
-import { downloaderClient } from '@/renderer/services/downloader';
-import ipcChannels from '@/common/constants/ipcChannels.json';
+import { Button } from '@houdoku/ui/components/Button';
+import { Input } from '@houdoku/ui/components/Input';
 import { Checkbox } from '@houdoku/ui/components/Checkbox';
+import { FieldHelp } from '@houdoku/ui/components/FieldHelp';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@houdoku/ui/components/Select';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@houdoku/ui/components/DropdownMenu';
+import { ContextMenu, ContextMenuTrigger } from '@houdoku/ui/components/ContextMenu';
+import routes from '@/common/constants/routes.json';
 import { TableColumnSortOrder } from '@/common/models/types';
 import { FS_METADATA } from '@/common/temp_fs_metadata';
-import { ContextMenu, ContextMenuTrigger } from '@houdoku/ui/components/ContextMenu';
+import {
+  chapterFilterGroupNamesState,
+  chapterListState,
+  seriesState,
+  sortedFilteredChapterListState,
+} from '@/renderer/state/libraryStates';
+import {
+  chapterLanguagesState,
+  chapterListChOrderState,
+  chapterListPageSizeState,
+  chapterListVolOrderState,
+} from '@/renderer/state/settingStates';
+import { markChapters } from '@/renderer/features/library/utils';
+import { ChapterTableLanguageFilter } from './ChapterTableLanguageFilter';
+import { ChapterTableGroupFilter } from './ChapterTableGroupFilter';
+import { ChapterTablePagination } from './ChapterTablePagination';
 import { ChapterTableContextMenu } from './ChapterTableContextMenu';
-import { useEffect } from 'react';
-import { currentTaskState } from '@/renderer/state/downloaderStates';
+import { downloadLabels, useChapterDownloads } from './useChapterDownloads';
 
-const defaultDownloadsDir = await ipcRenderer.invoke(ipcChannels.GET_PATH.DEFAULT_DOWNLOADS_DIR);
+const nextOrder = (order: TableColumnSortOrder) =>
+  order === TableColumnSortOrder.Descending
+    ? TableColumnSortOrder.Ascending
+    : order === TableColumnSortOrder.Ascending
+      ? TableColumnSortOrder.None
+      : TableColumnSortOrder.Descending;
+const orderIcon = (order: TableColumnSortOrder) =>
+  order === TableColumnSortOrder.Descending ? (
+    <ArrowDown />
+  ) : order === TableColumnSortOrder.Ascending ? (
+    <ArrowUp />
+  ) : (
+    <ChevronsUpDown />
+  );
 
-const columnOrderMap = {
-  [TableColumnSortOrder.Ascending]: <ArrowUp className="w-4 h-4" />,
-  [TableColumnSortOrder.Descending]: <ArrowDown className="w-4 h-4" />,
-  [TableColumnSortOrder.None]: <ChevronsUpDown className="w-4 h-4" />,
-};
-
-interface ChapterTableProps {
-  series: Series;
-}
-
-export function ChapterTable(props: ChapterTableProps) {
+export function ChapterTable({ series }: { series: Series }) {
   const navigate = useNavigate();
   const setSeries = useSetRecoilState(seriesState);
-  const [chapterList, setChapterList] = useRecoilState(chapterListState);
-  const sortedFilteredChapterList = useRecoilValue(sortedFilteredChapterListState);
-  const chapterLanguages = useRecoilValue(chapterLanguagesState);
-  const [chapterListVolOrder, setChapterListVolOrder] = useRecoilState(chapterListVolOrderState);
-  const [chapterListChOrder, setChapterListChOrder] = useRecoilState(chapterListChOrderState);
-  const [chapterDownloadStatuses, setChapterDownloadStatuses] = useRecoilState(
-    chapterDownloadStatusesState,
+  const [chapters, setChapters] = useRecoilState(chapterListState);
+  const eligible = useRecoilValue(sortedFilteredChapterListState);
+  const [languages, setLanguages] = useRecoilState(chapterLanguagesState);
+  const [groups, setGroups] = useRecoilState(chapterFilterGroupNamesState);
+  const [volumeOrder, setVolumeOrder] = useRecoilState(chapterListVolOrderState);
+  const [chapterOrder, setChapterOrder] = useRecoilState(chapterListChOrderState);
+  const [pageSize, setPageSize] = useRecoilState(chapterListPageSizeState);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [query, setQuery] = useState('');
+  const [progressFilter, setProgressFilter] = useState('all');
+  const [downloadFilter, setDownloadFilter] = useState('all');
+  const [selection, setSelection] = useState<RowSelectionState>({});
+  const [notice, setNotice] = useState('');
+  const scroll = useRef<HTMLDivElement>(null);
+  const downloads = useChapterDownloads(series, chapters);
+  const local = series.extensionId === FS_METADATA.id;
+  const data = eligible.filter(
+    (chapter) =>
+      (!query.trim() ||
+        `${chapter.chapterNumber} ${chapter.title}`
+          .toLocaleLowerCase()
+          .includes(query.trim().toLocaleLowerCase())) &&
+      (progressFilter === 'all' || chapter.read === (progressFilter === 'read')) &&
+      (downloadFilter === 'all' || downloads.getStatus(chapter) === downloadFilter),
   );
-  const customDownloadsDir = useRecoilValue(customDownloadsDirState);
-  const downloaderCurrentTask = useRecoilValue(currentTaskState);
-
+  const selected = chapters.filter((chapter) => selection[chapter.id!]);
+  const selectPrevious = (chapter: Chapter) =>
+    setSelection((old) => {
+      const result = { ...old };
+      eligible
+        .filter((item) => parseFloat(item.chapterNumber) < parseFloat(chapter.chapterNumber))
+        .forEach((item) => {
+          result[item.id!] = true;
+        });
+      return result;
+    });
+  const mark = (items: Chapter[], read: boolean) => {
+    markChapters(items, series, read, setChapters, setSeries, languages);
+    setSelection({});
+    setNotice(`${items.length} chapters marked ${read ? 'read' : 'unread'}.`);
+  };
+  const download = (items: Chapter[]) => {
+    setSelection({});
+    setNotice('');
+    downloads
+      .download(items)
+      .catch(() => setNotice('Download failed. Retry from the chapter menu.'));
+  };
+  const rowActions = (chapter: Chapter) => ({
+    read: chapter.read,
+    retry: downloads.getStatus(chapter) === 'failed',
+    canDownload:
+      !local &&
+      !series.preview &&
+      !['saved', 'queued', 'downloading', 'pausing'].includes(downloads.getStatus(chapter)),
+    onRead: () => navigate(`${routes.READER}/${series.id}/${chapter.id}`),
+    onMark: () => mark([chapter], !chapter.read),
+    onSelectPrevious: () => selectPrevious(chapter),
+    onDownload: () => download([chapter]),
+  });
+  const status = (chapter: Chapter) => {
+    const value = downloads.getStatus(chapter);
+    const Icon =
+      value === 'saved'
+        ? FileCheck
+        : value === 'downloading' || value === 'checking'
+          ? Loader2
+          : value === 'queued'
+            ? Clock
+            : value === 'failed' || value === 'unknown'
+              ? AlertCircle
+              : Download;
+    return (
+      <span
+        className={`inline-flex items-center gap-2 ${value === 'failed' ? 'text-danger' : 'text-muted-foreground'}`}
+      >
+        <Icon className={`w-4 h-4 ${value === 'downloading' ? 'animate-spin' : ''}`} />
+        {downloadLabels[value]}
+      </span>
+    );
+  };
   const columns: ColumnDef<Chapter>[] = [
     {
       id: 'select',
+      enableHiding: false,
       header: ({ table }) => (
-        <div className="flex justify-start">
-          <span className="w-5 h-5">
-            <Checkbox
-              checked={
-                table.getIsAllRowsSelected() ||
-                (table.getIsSomePageRowsSelected() && 'indeterminate')
-              }
-              onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-            />
-          </span>
-        </div>
+        <Checkbox
+          aria-label="Select page"
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        />
       ),
       cell: ({ row }) => (
-        <div className="flex">
-          <span className="w-5 h-5">
-            <Checkbox
-              checked={row.getIsSelected()}
-              onCheckedChange={(value) => row.toggleSelected(!!value)}
-            />
-          </span>
-        </div>
+        <Checkbox
+          aria-label={`Select chapter ${row.original.chapterNumber}`}
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+        />
       ),
+    },
+    {
+      id: 'chapter',
       enableHiding: false,
-    },
-    {
-      id: 'icons',
-      header: () => <></>,
-      cell: ({ row }) => {
-        const isDownloaded =
-          chapterDownloadStatuses[row.original.id!] || props.series.extensionId === FS_METADATA.id;
-
-        const spacer = <div className="w-4" />;
-        return (
-          <span className="w-[30px] flex space-x-0.5">
-            {row.original.read ? <Eye className="w-4 h-4" /> : spacer}
-            {isDownloaded ? <FileCheck className="w-4 h-4" /> : spacer}
-          </span>
-        );
-      },
-      enableHiding: false,
-    },
-    {
-      id: 'language',
-      header: () => <LanguagesIcon className="w-4 h-4" />,
-      cell: ({ row }) => {
-        const language = Languages[row.original.languageKey];
-        return (
-          <div className="flex justify-start w-8">
-            <div
-              className={`inline-flex flag:${language?.flagCode} w-[1.125rem] h-[0.75rem]`}
-              title={language?.name}
-            />
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'title',
-      header: () => <span>Title</span>,
+      header: 'Chapter',
       cell: ({ row }) => (
-        <div className="flex">
-          <span className="w-[100px] lg:w-[300px] xl:w-[400px] truncate">
-            {row.getValue('title')}
-          </span>
-        </div>
+        <>
+          <Link
+            className="series-chapter-link"
+            to={`${routes.READER}/${series.id}/${row.original.id}`}
+          >
+            <span>
+              {row.original.chapterNumber || 'Unnumbered'}
+              {table.getColumn('title')?.getIsVisible() && row.original.title
+                ? `. ${row.original.title}`
+                : ''}
+            </span>
+          </Link>
+          {table.getColumn('language')?.getIsVisible() && (
+            <p className="text-caption text-muted-foreground mt-1">
+              {Languages[row.original.languageKey]?.name || row.original.languageKey}
+            </p>
+          )}
+          <p className="series-mobile-status">
+            {row.original.read ? 'Read' : 'Unread'} ·{' '}
+            {downloadLabels[downloads.getStatus(row.original)]}
+          </p>
+        </>
       ),
     },
+    // Preferences are retained while title/language are composed inside the chapter cell.
+    { id: 'title', header: 'Title', cell: () => null },
+    { id: 'language', header: 'Language', cell: () => null },
     {
-      id: 'group',
-      header: () => <span>Group</span>,
-      cell: ({ row }) => (
-        <div className="flex">
-          <span className="w-[150px] truncate">{row.original.groupName}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'volumeNumber',
+      id: 'volume',
       header: () => (
         <Button
           variant="ghost"
           size="sm"
-          className="-ml-3 h-8 data-[state=open]:bg-accent w-16"
-          onClick={() => {
-            switch (chapterListVolOrder) {
-              case TableColumnSortOrder.Descending:
-                setChapterListVolOrder(TableColumnSortOrder.Ascending);
-                break;
-              case TableColumnSortOrder.Ascending:
-                setChapterListVolOrder(TableColumnSortOrder.None);
-                break;
-              default:
-                setChapterListVolOrder(TableColumnSortOrder.Descending);
-            }
-          }}
+          aria-label="Sort by volume"
+          onClick={() => setVolumeOrder(nextOrder(volumeOrder))}
         >
-          <span>Vol</span>
-          {columnOrderMap[chapterListVolOrder]}
+          Vol. {orderIcon(volumeOrder)}
         </Button>
       ),
+      cell: ({ row }) => row.original.volumeNumber || '—',
+    },
+    { id: 'group', header: 'Group', cell: ({ row }) => row.original.groupName || 'Unknown' },
+    {
+      id: 'progress',
+      header: 'Progress',
       cell: ({ row }) => (
-        <div className="flex space-x-0">
-          <span className="w-12 truncate">{row.getValue('volumeNumber')}</span>
-        </div>
+        <span className="inline-flex items-center gap-2 text-caption">
+          {row.original.read ? (
+            <Eye className="w-4 h-4 text-muted-foreground" />
+          ) : (
+            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+          )}
+          {row.original.read ? 'Read' : 'Unread'}
+        </span>
       ),
-      enableHiding: false,
     },
     {
-      accessorKey: 'chapterNumber',
-      header: () => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8 data-[state=open]:bg-accent w-12"
-          onClick={() => {
-            switch (chapterListChOrder) {
-              case TableColumnSortOrder.Descending:
-                setChapterListChOrder(TableColumnSortOrder.Ascending);
-                break;
-              case TableColumnSortOrder.Ascending:
-                setChapterListChOrder(TableColumnSortOrder.None);
-                break;
-              default:
-                setChapterListChOrder(TableColumnSortOrder.Descending);
-            }
-          }}
-        >
-          <span>Ch</span>
-          {columnOrderMap[chapterListChOrder]}
-        </Button>
-      ),
-      cell: ({ row }) => (
-        <div className="flex space-x-2">
-          <span className="w-12 truncate">{row.getValue('chapterNumber')}</span>
-        </div>
-      ),
+      id: 'download',
+      header: 'Download',
+      cell: ({ row }) => <div className="series-download-status">{status(row.original)}</div>,
+    },
+    {
+      id: 'actions',
       enableHiding: false,
+      header: () => <span className="sr-only">Actions</span>,
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={`Actions for chapter ${row.original.chapterNumber}`}
+            >
+              <MoreHorizontal />
+            </Button>
+          </DropdownMenuTrigger>
+          <ChapterTableContextMenu context={false} {...rowActions(row.original)} />
+        </DropdownMenu>
+      ),
     },
   ];
-
   const table = useReactTable({
-    data: sortedFilteredChapterList,
-    columns: columns,
+    data,
+    columns,
+    getRowId: (chapter) => chapter.id!,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    state: { rowSelection: selection, pagination: { pageIndex, pageSize } },
+    onRowSelectionChange: setSelection,
+    onPaginationChange: (updater) => {
+      const next = typeof updater === 'function' ? updater({ pageIndex, pageSize }) : updater;
+      setPageIndex(next.pageIndex);
+      if (next.pageSize !== pageSize) setPageSize(next.pageSize);
+    },
+    autoResetPageIndex: false,
     manualSorting: true,
     manualFiltering: true,
   });
-
-  const updateDownloadStatuses = () => {
-    ipcRenderer
-      .invoke(
-        ipcChannels.FILESYSTEM.GET_CHAPTERS_DOWNLOADED,
-        props.series,
-        chapterList,
-        customDownloadsDir || defaultDownloadsDir,
-      )
-      .then((statuses) => setChapterDownloadStatuses(statuses))
-      .catch((err) => console.error(err));
-  };
-
   useEffect(() => {
-    if (downloaderCurrentTask?.page === 2) updateDownloadStatuses();
-  }, [downloaderCurrentTask]);
-
+    setPageIndex(0);
+  }, [
+    query,
+    progressFilter,
+    downloadFilter,
+    languages,
+    groups,
+    chapterOrder,
+    volumeOrder,
+    pageSize,
+  ]);
   useEffect(() => {
-    if (chapterList.length > 0) updateDownloadStatuses();
-  }, [chapterList]);
-
-  const getSelectedChapters = (): Chapter[] => {
-    return table.getSelectedRowModel().rows.map((row) => row.original) as Chapter[];
-  };
-
-  const getNextUnreadChapter = () => {
-    return sortedFilteredChapterList
-      .slice()
-      .sort((a: Chapter, b: Chapter) => parseFloat(a.chapterNumber) - parseFloat(b.chapterNumber))
-      .find((chapter: Chapter) => !chapter.read);
-  };
-
-  const selectChapters = (chapters: Chapter[], keepCurrentSelection: boolean = true) => {
-    const chapterIds = chapters.map((chapter) => chapter.id).filter((id) => id !== undefined);
-    const rowsToSelect = table
-      .getCoreRowModel()
-      .rows.filter((row) => chapterIds.includes(row.original.id!));
-
-    table.setRowSelection((old: RowSelectionState) => {
-      const result = keepCurrentSelection ? { ...old } : {};
-      rowsToSelect.forEach((row) => (result[row.id] = true));
-      return result;
-    });
-  };
-
-  const setSelectedRead = (read: boolean) => {
-    markChapters(
-      getSelectedChapters(),
-      props.series,
-      read,
-      setChapterList,
-      setSeries,
-      chapterLanguages,
+    setPageIndex((index) => Math.min(index, Math.max(0, Math.ceil(data.length / pageSize) - 1)));
+  }, [data.length, pageSize]);
+  useEffect(() => {
+    scroll.current?.scrollTo({ top: 0 });
+  }, [
+    pageIndex,
+    query,
+    progressFilter,
+    downloadFilter,
+    languages,
+    groups,
+    chapterOrder,
+    volumeOrder,
+  ]);
+  useEffect(() => {
+    setSelection((old) =>
+      Object.fromEntries(
+        Object.entries(old).filter(([id]) => chapters.some((chapter) => chapter.id === id)),
+      ),
     );
+  }, [chapters]);
+  const uniqueGroups = useMemo(
+    () => Array.from(new Set(chapters.map((chapter) => chapter.groupName || ''))),
+    [chapters],
+  );
+  const reset = () => {
+    setQuery('');
+    setProgressFilter('all');
+    setDownloadFilter('all');
+    setLanguages([]);
+    setGroups([]);
   };
-
-  const downloadSelected = () => {
-    downloaderClient.add(
-      getSelectedChapters().map((chapter) => ({
-        chapter,
-        series: props.series,
-        downloadsDir: customDownloadsDir || defaultDownloadsDir,
-      })),
-    );
-    downloaderClient.start();
-  };
-
+  const selectFilter = (
+    label: string,
+    value: string,
+    change: (value: string) => void,
+    options: [string, string][],
+  ) => (
+    <Select value={value} onValueChange={change}>
+      <SelectTrigger aria-label={label}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map(([key, text]) => (
+          <SelectItem key={key} value={key}>
+            {text}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
   return (
-    <div className="space-y-2 pb-4">
-      <div className="flex items-center justify-between">
-        {table.getIsSomeRowsSelected() || table.getIsAllRowsSelected() ? (
-          <div className="flex space-x-2 items-end">
-            <Button className="ml-auto" onClick={() => setSelectedRead(true)}>
-              <Eye className="w-4 h-4" />
-              Mark selected read
+    <>
+      <section className="series-chapters" aria-label="Chapters">
+        <div className="series-chapter-heading">
+          <div>
+            <h2 className="text-section-title">Chapters</h2>
+            <p className="text-caption text-muted-foreground mt-1">
+              {data.length} matching chapters
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {(query ||
+              progressFilter !== 'all' ||
+              downloadFilter !== 'all' ||
+              groups.length > 0 ||
+              languages.length > 0) && (
+              <Button variant="ghost" size="sm" onClick={reset}>
+                Reset filters
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label="Sort chapters"
+              onClick={() => setChapterOrder(nextOrder(chapterOrder))}
+            >
+              {orderIcon(chapterOrder)}
+              {chapterOrder === TableColumnSortOrder.Descending
+                ? 'Newest first'
+                : chapterOrder === TableColumnSortOrder.Ascending
+                  ? 'Oldest first'
+                  : 'Source order'}
             </Button>
-            <Button className="ml-auto" onClick={() => setSelectedRead(false)}>
-              <EyeOff className="w-4 h-4" />
-              Mark selected unread
-            </Button>
-            {/* TODO add confirmation prompt */}
-            <Button className="ml-auto" onClick={() => downloadSelected()}>
-              <Download className="w-4 h-4" />
-              Download selected
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Chapter columns">
+                  <Settings2 />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => (
+                    <DropdownMenuCheckboxItem
+                      className="capitalize"
+                      key={column.id}
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                      onSelect={(event) => event.preventDefault()}
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        <div className="series-chapter-filters">
+          <Input
+            className="series-chapter-search"
+            aria-label="Search chapters"
+            placeholder="Title or chapter number…"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <ChapterTableLanguageFilter />
+          <ChapterTableGroupFilter uniqueGroupNames={uniqueGroups} />
+          {selectFilter('Reading progress', progressFilter, setProgressFilter, [
+            ['all', 'All progress'],
+            ['read', 'Read'],
+            ['unread', 'Unread'],
+          ])}
+          {selectFilter('Download status', downloadFilter, setDownloadFilter, [
+            ['all', 'All downloads'],
+            ['saved', 'Available offline'],
+            ['none', 'Not downloaded'],
+            ['queued', 'Queued'],
+            ['downloading', 'Downloading'],
+            ['failed', 'Failed'],
+          ])}
+        </div>
+        {downloads.statusError && (
+          <div className="series-refresh-error" role="alert">
+            <span>Could not check downloaded chapters.</span>
+            <Button size="sm" variant="outline" onClick={downloads.retryStatus}>
+              Retry status
             </Button>
           </div>
-        ) : (
-          <>
-            <div className="flex space-x-2">
-              <ChapterTableLanguageFilter />
-              <ChapterTableGroupFilter
-                uniqueGroupNames={Array.from(
-                  new Set(chapterList.map((chapter) => chapter.groupName)),
-                )}
-              />
-            </div>
-            <div className="flex space-x-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="ml-auto">
-                    <Settings2 className="w-4 h-4" />
-                    View
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Columns</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {table
-                    .getAllColumns()
-                    .filter((column) => column.getCanHide())
-                    .map((column) => {
-                      return (
-                        <DropdownMenuCheckboxItem
-                          key={column.id}
-                          className="capitalize"
-                          checked={column.getIsVisible()}
-                          onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                          onSelect={(event) => event.preventDefault()}
-                        >
-                          {column.id}
-                        </DropdownMenuCheckboxItem>
-                      );
-                    })}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              {getNextUnreadChapter() && (
-                <Link to={`${routes.READER}/${props.series.id}/${getNextUnreadChapter()?.id}`}>
-                  <Button variant="outline">
-                    <Play className="w-4 h-4" />
-                    Continue
-                  </Button>
-                </Link>
-              )}
-            </div>
-          </>
         )}
-      </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
+        <div className="series-chapter-scroll" ref={scroll} tabIndex={0} aria-label="Chapter list">
+          <table className="series-chapter-table">
+            <thead>
+              {table.getHeaderGroups().map((group) => (
+                <tr key={group.id}>
+                  {group.headers
+                    .filter((header) => !['title', 'language'].includes(header.id))
+                    .map((header) => (
+                      <th
+                        key={header.id}
+                        className={`text-left series-${header.id === 'chapter' ? 'title' : header.id}-cell`}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </th>
+                    ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
                 <ContextMenu key={row.id}>
                   <ContextMenuTrigger asChild>
-                    <TableRow
+                    <tr
+                      data-selected={row.getIsSelected()}
+                      data-chapter-id={row.original.id}
                       className="cursor-pointer"
-                      data-state={row.getIsSelected() && 'selected'}
-                      onClick={() =>
-                        navigate(`${routes.READER}/${props.series.id}/${row.original.id}`)
-                      }
+                      onClick={(event) => {
+                        if (!event.currentTarget.contains(event.target as Node)) return;
+                        if (!(event.target as HTMLElement).closest('button, a, [role="checkbox"]'))
+                          rowActions(row.original).onRead();
+                      }}
                     >
-                      {row.getVisibleCells().map((cell) => {
-                        const canClickThrough = ['select', 'icons'].includes(
-                          cell.column.columnDef.id!,
-                        );
-                        return (
-                          <TableCell
-                            className={canClickThrough ? 'cursor-default' : ''}
+                      {row
+                        .getVisibleCells()
+                        .filter((cell) => !['title', 'language'].includes(cell.column.id))
+                        .map((cell) => (
+                          <td
                             key={cell.id}
-                            onClick={(e) => canClickThrough && e.stopPropagation()}
+                            className={`series-${cell.column.id === 'chapter' ? 'title' : cell.column.id}-cell`}
                           >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
+                          </td>
+                        ))}
+                    </tr>
                   </ContextMenuTrigger>
-                  <ChapterTableContextMenu
-                    series={props.series}
-                    chapter={row.original}
-                    selectFunc={(chapters: Chapter[]) => selectChapters(chapters, true)}
-                  />
+                  <ChapterTableContextMenu {...rowActions(row.original)} />
                 </ContextMenu>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <ChapterTablePagination table={table} />
-    </div>
+              ))}
+            </tbody>
+          </table>
+          {!data.length && (
+            <div className="series-chapter-empty">
+              <h3 className="font-medium">
+                {chapters.length ? 'No matching chapters' : 'No chapters yet'}
+              </h3>
+              <p className="text-muted-foreground">
+                {chapters.length
+                  ? 'Try different languages, groups, or filters.'
+                  : 'Refresh the series to check for new chapters.'}
+              </p>
+              {chapters.length > 0 && (
+                <Button variant="outline" onClick={reset}>
+                  Reset filters
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+        <ChapterTablePagination table={table} />
+      </section>
+      <footer className="series-action-footer" aria-label="Chapter selection actions">
+        {selected.length ? (
+          <>
+            <div className="flex gap-2 items-center">
+              <span>{selected.length} selected</span>
+              <FieldHelp
+                label="Chapter selection"
+                descriptionId="chapter-selection-help"
+                text="Selections remain across pages and filters. Actions apply to every selected chapter, including those currently hidden."
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => mark(selected, true)}>
+                <Eye />
+                Mark read
+              </Button>
+              <Button variant="outline" onClick={() => mark(selected, false)}>
+                <EyeOff />
+                Mark unread
+              </Button>
+              <Button disabled={local || !!series.preview} onClick={() => download(selected)}>
+                <Download />
+                Download selected
+              </Button>
+              <Button variant="ghost" onClick={() => setSelection({})}>
+                Done
+              </Button>
+            </div>
+          </>
+        ) : (
+          <p role="status" className="text-caption text-muted-foreground">
+            {notice || 'Select chapters to mark progress or download for offline reading.'}
+          </p>
+        )}
+      </footer>
+    </>
   );
 }

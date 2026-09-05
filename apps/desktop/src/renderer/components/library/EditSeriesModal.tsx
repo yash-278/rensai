@@ -36,18 +36,20 @@ const EditSeriesModal: React.FC<Props> = (props: Props) => {
 
   return (
     <AlertDialog open={props.showing} onOpenChange={props.setShowing}>
-      <AlertDialogContent className="overflow-y-scroll max-h-screen [@media(min-height:500px)]:max-h-[500px] md:max-w-[700px] lg:max-w-[800px]">
-        <AlertDialogHeader>
+      <AlertDialogContent className="flex flex-col overflow-hidden max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] md:max-w-[700px] lg:max-w-[800px]">
+        <AlertDialogHeader className="shrink-0">
           <AlertDialogTitle>Edit series</AlertDialogTitle>
         </AlertDialogHeader>
-        {customSeries !== undefined && (
-          <SeriesEditControls
-            series={customSeries}
-            setSeries={(series: Series) => setCustomSeries(series)}
-            editable
-          />
-        )}
-        <AlertDialogFooter>
+        <div className="min-h-0 overflow-y-auto overscroll-contain pr-1">
+          {customSeries !== undefined && (
+            <SeriesEditControls
+              series={customSeries}
+              setSeries={(series: Series) => setCustomSeries(series)}
+              editable
+            />
+          )}
+        </div>
+        <AlertDialogFooter className="shrink-0">
           <Button variant={'secondary'} onClick={() => props.setShowing(false)}>
             Cancel
           </Button>

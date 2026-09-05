@@ -1,3 +1,4 @@
+import { eligibleChapters } from '@/renderer/features/library/readingProgress';
 import { Chapter, ExtensionMetadata, Series } from '@tiyo/common';
 import { atom, selector } from 'recoil';
 import { Category, ImportTask, TableColumnSortOrder } from '@/common/models/types';
@@ -62,19 +63,9 @@ export const multiSelectSeriesListState = atom<Series[]>({
   default: [],
 });
 
-export const seriesBannerUrlState = atom({
-  key: 'seriesBannerUrlState',
-  default: null as string | null,
-});
-
 export const completedStartReloadState = atom({
   key: 'completedStartReloadState',
   default: false,
-});
-
-export const chapterDownloadStatusesState = atom<{ [key: string]: boolean }>({
-  key: `chapterDownloadStatusesState`,
-  default: {},
 });
 
 export const chapterFilterGroupNamesState = atom({
@@ -104,50 +95,20 @@ export const sortedFilteredChapterListState = selector<Chapter[]>({
     const chapterListVolOrder = get(chapterListVolOrderState);
     const chapterListChOrder = get(chapterListChOrderState);
 
-    const uniqueChapters = new Map();
+    return eligibleChapters(chapterList, chapterLanguages, chapterFilterGroupNames).sort((a, b) => {
+      const volumeComp = {
+        [TableColumnSortOrder.Ascending]: parseFloat(a.volumeNumber) - parseFloat(b.volumeNumber),
+        [TableColumnSortOrder.Descending]: parseFloat(b.volumeNumber) - parseFloat(a.volumeNumber),
+        [TableColumnSortOrder.None]: 0,
+      }[chapterListVolOrder];
+      const chapterComp = {
+        [TableColumnSortOrder.Ascending]: parseFloat(a.chapterNumber) - parseFloat(b.chapterNumber),
+        [TableColumnSortOrder.Descending]:
+          parseFloat(b.chapterNumber) - parseFloat(a.chapterNumber),
+        [TableColumnSortOrder.None]: 0,
+      }[chapterListChOrder];
 
-    if (chapterLanguages.length > 0) {
-      chapterLanguages.forEach((lang) => {
-        chapterList.filter(
-          (chapter: Chapter) =>
-            chapter.languageKey === lang &&
-            !uniqueChapters.has(chapter.chapterNumber) &&
-            uniqueChapters.set(chapter.chapterNumber, chapter),
-        );
-      });
-    }
-
-    return chapterList
-      .filter((chapter: Chapter) => {
-        const matchesLanguage =
-          chapterLanguages.includes(chapter.languageKey) || chapterLanguages.length === 0;
-        const matchesGroup =
-          chapterFilterGroupNames.length > 0
-            ? chapterFilterGroupNames.includes(chapter.groupName || '')
-            : true;
-        const unique =
-          (uniqueChapters.has(chapter.chapterNumber) &&
-            uniqueChapters.get(chapter.chapterNumber) === chapter) ||
-          chapterLanguages.length === 0;
-
-        return matchesLanguage && matchesGroup && unique;
-      })
-      .sort((a, b) => {
-        const volumeComp = {
-          [TableColumnSortOrder.Ascending]: parseFloat(a.volumeNumber) - parseFloat(b.volumeNumber),
-          [TableColumnSortOrder.Descending]:
-            parseFloat(b.volumeNumber) - parseFloat(a.volumeNumber),
-          [TableColumnSortOrder.None]: 0,
-        }[chapterListVolOrder];
-        const chapterComp = {
-          [TableColumnSortOrder.Ascending]:
-            parseFloat(a.chapterNumber) - parseFloat(b.chapterNumber),
-          [TableColumnSortOrder.Descending]:
-            parseFloat(b.chapterNumber) - parseFloat(a.chapterNumber),
-          [TableColumnSortOrder.None]: 0,
-        }[chapterListChOrder];
-
-        return volumeComp || chapterComp;
-      });
+      return volumeComp || chapterComp;
+    });
   },
 });

@@ -70,7 +70,10 @@ const filters = [
       { key: 'title', label: 'Title' },
     ])
     .withSupportsBothDirections(true),
-  new FilterInput('author', 'Author', '').withPlaceholder('Author name'),
+  Object.assign(new FilterInput('author', 'Author', '').withPlaceholder('Any'), {
+    helpText:
+      'Separate terms with spaces. Put a phrase in double quotes. Prefix a term with - to exclude it.\nExample: name "exact phrase" -excluded',
+  }),
   new FilterSelect('language', 'Language', 'all').withOptions([
     { value: 'all', label: 'All languages' },
     { value: 'en', label: 'English' },
@@ -121,6 +124,8 @@ Object.assign(window, {
           switch (channel) {
             case ipc.GET_PATH.THUMBNAILS_DIR:
               return '/offline-review';
+            case ipc.EXTENSION_MANAGER.GET:
+              return { id: args[0], name: 'Sample catalog' };
             case ipc.EXTENSION_MANAGER.GET_ALL:
               return [
                 { id: 'sample', name: 'Sample catalog', url: '' },

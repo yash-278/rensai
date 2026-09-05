@@ -216,9 +216,10 @@ export async function reloadSeriesList(
   for (const series of sortedSeriesList) {
     update({ description: `Reloading series ${cur}/${sortedSeriesList.length}` });
 
-    const ret = await reloadSeries(series, chapterLanguages);
-    if (ret instanceof Error) {
-      console.error(ret);
+    try {
+      const ret = await reloadSeries(series, chapterLanguages);
+      if (ret instanceof Error) failedToUpdate.push(series);
+    } catch {
       failedToUpdate.push(series);
     }
     cur += 1;
@@ -241,6 +242,7 @@ export async function reloadSeriesList(
   }
 
   setReloadingSeriesList(false);
+  return failedToUpdate;
 }
 
 export function updateSeries(series: Series) {

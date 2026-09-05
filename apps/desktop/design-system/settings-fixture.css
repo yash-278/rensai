@@ -1,0 +1,41 @@
+/* Settings proposal. Shared tokens and controls, synthetic preference state. */
+.settings-review-stage {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  min-height: 100dvh;
+}
+.settings-review-sidebar {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-6);
+  border-right: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+}
+.settings-review-sidebar strong {
+  font-size: var(--type-section);
+}
+.settings-review-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: var(--space-8) 0;
+}
+.settings-review-sidebar [aria-current] {
+  color: hsl(var(--primary));
+}
+.settings-review-sidebar p {
+  margin-top: auto;
+  color: hsl(var(--muted-foreground));
+  font-size: var(--type-caption);
+}
+.settings-review-intro {
+  padding: var(--space-8);
+}
+.settings-review-intro h1 {
+  font-size: var(--type-title);
+  font-weight: 600;
+}
+.settings-review-intro p {
+  margin: var(--space-2) 0 var(--space-6);
+  color: hsl(var(--muted-foreground));
+}

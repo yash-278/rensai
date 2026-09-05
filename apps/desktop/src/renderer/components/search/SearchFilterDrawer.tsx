@@ -28,6 +28,7 @@ import SearchFilterCycle from './filter/SearchFilterCycle';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@houdoku/ui/components/Sheet';
 import { Label } from '@houdoku/ui/components/Label';
 import { Input } from '@houdoku/ui/components/Input';
+import { FieldHelp } from '@houdoku/ui/components/FieldHelp';
 import { Checkbox } from '@houdoku/ui/components/Checkbox';
 import {
   Select,
@@ -84,14 +85,25 @@ const SearchFilterDrawer: React.FC<Props> = (props: Props) => {
     );
   };
 
-  const renderInput = (option: FilterInput) => {
+  // Optional Rensai metadata; sources using the original contract still render normally.
+  const renderInput = (option: FilterInput & { helpText?: string }) => {
     return (
       <div key={option.id}>
-        <Label htmlFor={`filter-${option.id}`}>{option.label}</Label>
+        <div className="mb-1 flex min-h-7 items-center gap-1">
+          <Label htmlFor={`filter-${option.id}`}>{option.label}</Label>
+          {option.helpText && (
+            <FieldHelp
+              label={option.label}
+              text={option.helpText}
+              descriptionId={`filter-${option.id}-help`}
+            />
+          )}
+        </div>
         <Input
           id={`filter-${option.id}`}
           value={getOptionValue(option) as string}
           placeholder={option.placeholder}
+          aria-describedby={option.helpText ? `filter-${option.id}-help` : undefined}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setOptionValue(option.id, e.target.value, true)
           }

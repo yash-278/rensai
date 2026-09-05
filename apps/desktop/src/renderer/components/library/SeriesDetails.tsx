@@ -1,137 +1,323 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
-const { ipcRenderer } = require('electron');
-import { Series } from '@tiyo/common';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
-import { getBannerImageUrl } from '@/renderer/services/mediasource';
+import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { Languages } from '@tiyo/common';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+import { ArrowLeft, Loader2, MoreHorizontal, Play, RefreshCw } from 'lucide-react';
+import { Button } from '@houdoku/ui/components/Button';
+import { Badge } from '@houdoku/ui/components/Badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@houdoku/ui/components/DropdownMenu';
 import ipcChannels from '@/common/constants/ipcChannels.json';
-import { SeriesTrackerDialog } from './tracker/SeriesTrackerDialog';
-import EditSeriesModal from './EditSeriesModal';
-import { downloadCover } from '@/renderer/util/download';
+import routes from '@/common/constants/routes.json';
+import { FS_METADATA } from '@/common/temp_fs_metadata';
 import library from '@/renderer/services/library';
+import { downloadCover } from '@/renderer/util/download';
+import { reloadSeriesList } from '@/renderer/features/library/utils';
+import { readingProgress } from '@/renderer/features/library/readingProgress';
+import { chapterLanguagesState } from '@/renderer/state/settingStates';
 import {
   chapterFilterGroupNamesState,
   chapterListState,
   currentExtensionMetadataState,
-  seriesBannerUrlState,
+  reloadingSeriesListState,
   seriesListState,
   seriesState,
+  sortedFilteredChapterListState,
 } from '@/renderer/state/libraryStates';
+import { SeriesTrackerDialog } from './tracker/SeriesTrackerDialog';
+import EditSeriesModal from './EditSeriesModal';
 import DownloadModal from './DownloadModal';
-import SeriesDetailsFloatingHeader from './series/SeriesDetailsFloatingHeader';
-import SeriesDetailsBanner from './series/SeriesDetailsBanner';
-import SeriesDetailsIntro from './series/SeriesDetailsIntro';
-import SeriesDetailsInfoGrid from './series/SeriesDetailsInfoGrid';
-import { ChapterTable } from './series/chapter-table/ChapterTable';
-import { Loader2 } from 'lucide-react';
 import { RemoveSeriesDialog } from './RemoveSeriesDialog';
+import LibraryCover from './LibraryCover';
+import { ChapterTable } from './series/chapter-table/ChapterTable';
+import './series/series.css';
+const { ipcRenderer } = require('electron');
 
-type Props = unknown;
-
-const SeriesDetails: React.FC<Props> = () => {
-  const { id } = useParams<{ id: string }>();
-  let series: Series = library.fetchSeries(id!)!;
-
-  const location = useLocation();
-  const setExtensionMetadata = useSetRecoilState(currentExtensionMetadataState);
-  const [showingTrackerModal, setShowingTrackerModal] = useState(false);
-  const [showingRemoveModal, setShowingRemoveModal] = useState(false);
-  const [showingEditModal, setShowingEditModal] = useState(false);
-  const [showingDownloadModal, setShowingDownloadModal] = useState(false);
-  const setSeries = useSetRecoilState(seriesState);
+function SeriesDetailsPage({ id }: { id: string }) {
+  const [series, setSeries] = useRecoilState(seriesState);
   const seriesList = useRecoilValue(seriesListState);
-  const setChapterList = useSetRecoilState(chapterListState);
-  const setChapterFilterGroupNames = useSetRecoilState(chapterFilterGroupNamesState);
-  const setSeriesBannerUrl = useSetRecoilState(seriesBannerUrlState);
-
-  const loadContent = async () => {
-    console.info(`Series page is loading details from database for series ${id}`);
-
-    series = library.fetchSeries(id!)!;
-    setSeries(series);
-    setChapterList(library.fetchChapters(id!));
-
-    if (!series) {
-      return;
-    }
-
-    ipcRenderer
-      .invoke(ipcChannels.EXTENSION_MANAGER.GET, series.extensionId)
-      .then((metadata) => setExtensionMetadata(metadata))
-      .catch((err: Error) => console.error(err));
-
-    getBannerImageUrl(series)
-      .then((url: string | null) => setSeriesBannerUrl(url))
-      .catch((err: Error) => console.error(err));
-  };
+  const setSeriesList = useSetRecoilState(seriesListState);
+  const setChapters = useSetRecoilState(chapterListState);
+  const chapters = useRecoilValue(sortedFilteredChapterListState);
+  const [metadata, setMetadata] = useRecoilState(currentExtensionMetadataState);
+  const setGroups = useSetRecoilState(chapterFilterGroupNamesState);
+  const languages = useRecoilValue(chapterLanguagesState);
+  const [refreshing, setRefreshing] = useRecoilState(reloadingSeriesListState);
+  const [ready, setReady] = useState(false);
+  const [modal, setModal] = useState('');
+  const [expanded, setExpanded] = useState(false);
+  const [details, setDetails] = useState(false);
+  const [refreshError, setRefreshError] = useState(false);
 
   useEffect(() => {
-    loadContent();
-  }, [id, seriesList]);
-
+    setGroups([]);
+  }, [id, setGroups]);
   useEffect(() => {
-    setChapterFilterGroupNames([]);
-  }, [location, setChapterFilterGroupNames]);
+    const saved = library.fetchSeries(id);
+    setSeries(saved || undefined);
+    setChapters(saved ? library.fetchChapters(id) : []);
+    setReady(true);
+  }, [id, seriesList, setSeries, setChapters]);
+  const extensionId = series?.id === id ? series.extensionId : undefined;
+  useEffect(() => {
+    let active = true;
+    setMetadata(undefined);
+    if (extensionId)
+      ipcRenderer
+        .invoke(ipcChannels.EXTENSION_MANAGER.GET, extensionId)
+        .then((value) => {
+          if (active) setMetadata(value);
+        })
+        .catch(() => {
+          if (active) setMetadata(undefined);
+        });
+    return () => {
+      active = false;
+    };
+  }, [extensionId, setMetadata]);
 
-  if (!series) {
+  if (!ready)
     return (
-      <div className="flex w-full h-[calc(100vh-64px)] justify-center items-center align-middle">
-        <Loader2 className="animate-spin w-8 h-8" />
+      <div className="series-page items-center justify-center">
+        <Loader2 aria-label="Loading series" className="animate-spin" />
       </div>
     );
-  }
+  if (!series || series.id !== id)
+    return (
+      <div className="series-page items-center justify-center gap-4">
+        <h1 className="text-section-title">Series not found</h1>
+        <Link to={routes.LIBRARY}>Back to library</Link>
+      </div>
+    );
+  const progress = readingProgress(chapters);
+  const local = series.extensionId === FS_METADATA.id;
+  const refresh = async () => {
+    if (refreshing) return;
+    setRefreshError(false);
+    try {
+      const failed = await reloadSeriesList([series], setSeriesList, setRefreshing, languages);
+      setRefreshError(failed.length > 0);
+    } catch {
+      setRefreshError(true);
+      setRefreshing(false);
+    }
+  };
   return (
-    <div className="pb-4">
-      <>
+    <div className="series-page">
+      <header className="series-page-header">
+        <div className="min-w-0">
+          <Link
+            className="inline-flex items-center gap-2 text-muted-foreground mb-2"
+            to={series.preview ? routes.SEARCH : routes.LIBRARY}
+            onClick={() => setSeriesList(library.fetchSeriesList())}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {series.preview ? 'Back to search' : 'Library'}
+          </Link>
+          <h1 className="text-page-title" title={series.title}>
+            {series.title}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {local ? 'Local files' : metadata?.name || 'Source unavailable'} ·{' '}
+            {series.status || 'Unknown status'}
+          </p>
+        </div>
+        <div className="series-header-actions">
+          <Button
+            className="series-header-refresh"
+            variant="outline"
+            disabled={refreshing}
+            onClick={refresh}
+          >
+            {refreshing ? <Loader2 className="animate-spin" /> : <RefreshCw />}{' '}
+            {refreshing ? 'Refreshing…' : 'Refresh'}
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" aria-label="Series actions">
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem disabled={refreshing} onSelect={refresh}>
+                Refresh chapters
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setModal('trackers')}>Trackers</DropdownMenuItem>
+              {local && (
+                <DropdownMenuItem onSelect={() => setModal('edit')}>Edit series</DropdownMenuItem>
+              )}
+              {!series.preview && (
+                <>
+                  <DropdownMenuItem disabled={local} onSelect={() => setModal('download')}>
+                    Download chapters
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setModal('remove')}>
+                    Remove series
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {series.preview && (
+            <Button
+              onClick={() => {
+                const saved = library.upsertSeries({ ...series, preview: false });
+                setSeries(saved);
+                setSeriesList(library.fetchSeriesList());
+                downloadCover(saved).catch(console.error);
+              }}
+            >
+              Add to library
+            </Button>
+          )}
+          {progress.next ? (
+            <Button asChild variant={series.preview ? 'outline' : 'default'}>
+              <Link to={`${routes.READER}/${id}/${progress.next.id}`}>
+                <Play />
+                {progress.read ? 'Continue reading' : 'Start reading'}
+              </Link>
+            </Button>
+          ) : (
+            <Button disabled>{progress.total ? 'Caught up' : 'No chapters'}</Button>
+          )}
+        </div>
+      </header>
+      {refreshError && (
+        <div className="series-refresh-error" role="alert">
+          <span>Could not refresh this series. Your saved chapters are still available.</span>
+          <Button variant="outline" size="sm" disabled={refreshing} onClick={refresh}>
+            Retry
+          </Button>
+        </div>
+      )}
+      <div className="series-workspace">
+        <aside className="series-metadata" aria-label="Series metadata" tabIndex={0}>
+          <div className="series-cover">
+            <LibraryCover series={series} />
+          </div>
+          <div className="series-metadata-summary">
+            <p>
+              {progress.read} of {progress.total} chapters read
+            </p>
+            <progress
+              className="w-full h-1 my-3 accent-primary"
+              value={progress.read}
+              max={progress.total || 1}
+              aria-label="Reading progress"
+            />
+            <p className="text-caption text-muted-foreground">
+              {progress.next
+                ? `Up next: chapter ${progress.next.chapterNumber}`
+                : progress.total
+                  ? 'All caught up'
+                  : 'No chapters in these languages and groups'}
+            </p>
+            <Button
+              variant="ghost"
+              className="series-metadata-toggle"
+              aria-expanded={details}
+              aria-controls="series-metadata-details"
+              onClick={() => setDetails(!details)}
+            >
+              {details ? 'Hide details' : 'Series details'}
+            </Button>
+          </div>
+          <div
+            id="series-metadata-details"
+            className={`series-metadata-details ${details ? 'is-expanded' : ''}`}
+          >
+            <dl className="series-facts">
+              <div>
+                <dt>Author</dt>
+                <dd>{Array.from(new Set(series.authors)).join('; ') || 'Unknown'}</dd>
+              </div>
+              <div>
+                <dt>Artist</dt>
+                <dd>{Array.from(new Set(series.artists)).join('; ') || 'Unknown'}</dd>
+              </div>
+              <div>
+                <dt>Original language</dt>
+                <dd>{Languages[series.originalLanguageKey]?.name || 'Unknown'}</dd>
+              </div>
+              <div>
+                <dt>Publication status</dt>
+                <dd>{series.status || 'Unknown'}</dd>
+              </div>
+            </dl>
+            <h2 className="font-medium mt-6 mb-2">About this series</h2>
+            <p
+              id="series-description-text"
+              className={`whitespace-pre-wrap text-muted-foreground ${expanded ? '' : 'line-clamp-3'}`}
+            >
+              {series.description || 'No description available.'}
+            </p>
+            {series.description && (
+              <Button
+                variant="ghost"
+                className="-ml-3"
+                aria-expanded={expanded}
+                aria-controls="series-description-text"
+                onClick={() => setExpanded(!expanded)}
+              >
+                {expanded ? 'Show less' : 'Read more'}
+              </Button>
+            )}
+            <div className="flex flex-wrap gap-2 mt-4">
+              {Array.from(new Set(series.tags)).map((tag) => (
+                <Badge variant="secondary" key={tag}>
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </aside>
+        <ChapterTable series={series} />
+      </div>
+      {modal === 'trackers' && (
         <SeriesTrackerDialog
           series={series}
-          showing={showingTrackerModal}
-          setShowing={setShowingTrackerModal}
+          showing={modal === 'trackers'}
+          setShowing={(open) => setModal(open ? 'trackers' : '')}
         />
+      )}
+      {modal === 'edit' && (
         <EditSeriesModal
           series={series}
-          showing={showingEditModal}
-          setShowing={setShowingEditModal}
-          save={(newSeries) => {
-            if (newSeries.remoteCoverUrl !== series?.remoteCoverUrl) {
-              console.debug(`Updating cover for series ${series?.id}`);
+          showing={modal === 'edit'}
+          setShowing={(open) => setModal(open ? 'edit' : '')}
+          save={(updated) => {
+            setSeries(updated);
+            if (updated.remoteCoverUrl !== series.remoteCoverUrl) {
               ipcRenderer
-                .invoke(ipcChannels.FILESYSTEM.DELETE_THUMBNAIL, newSeries)
-                .then(() => downloadCover(newSeries))
+                .invoke(ipcChannels.FILESYSTEM.DELETE_THUMBNAIL, updated)
+                .then(() => downloadCover(updated))
                 .catch(console.error);
             }
-            setSeries(newSeries);
           }}
         />
+      )}
+      {modal === 'download' && (
         <DownloadModal
           series={series}
-          showing={showingDownloadModal}
-          setShowing={setShowingDownloadModal}
+          showing={modal === 'download'}
+          setShowing={(open) => setModal(open ? 'download' : '')}
         />
+      )}
+      {modal === 'remove' && (
         <RemoveSeriesDialog
           series={series}
-          showing={showingRemoveModal}
-          setShowing={setShowingRemoveModal}
+          showing={modal === 'remove'}
+          setShowing={(open) => setModal(open ? 'remove' : '')}
         />
-
-        <SeriesDetailsFloatingHeader series={series} />
-
-        <SeriesDetailsBanner
-          series={series}
-          showDownloadModal={() => setShowingDownloadModal(true)}
-          showEditModal={() => setShowingEditModal(true)}
-          showTrackerModal={() => setShowingTrackerModal(true)}
-          showRemoveModal={() => setShowingRemoveModal(true)}
-        />
-
-        <SeriesDetailsIntro series={series} />
-
-        <SeriesDetailsInfoGrid series={series} />
-
-        <ChapterTable series={series} />
-      </>
+      )}
     </div>
   );
-};
-
-export default SeriesDetails;
+}
+export default function SeriesDetails() {
+  const { id } = useParams<{ id: string }>();
+  return <SeriesDetailsPage key={id} id={id!} />;
+}

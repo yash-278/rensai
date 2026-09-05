@@ -1,0 +1,46 @@
+.series-live-fixture {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  height: calc(100dvh - var(--titlebar-height, 0px));
+  overflow: hidden;
+}
+.series-review-nav {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--space-6);
+  border-right: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+}
+.series-review-tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: auto;
+}
+@media (max-width: 767px) {
+  .series-live-fixture {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .series-live-fixture .series-page {
+    height: 100%;
+  }
+  .series-review-nav {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-4);
+    gap: var(--space-2);
+  }
+  .series-review-tools {
+    flex-direction: row;
+    margin: 0;
+    align-items: center;
+  }
+  .series-review-nav > p,
+  .series-review-nav > nav,
+  .series-review-tools > p {
+    display: none;
+  }
+}
