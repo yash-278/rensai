@@ -152,7 +152,7 @@ const PluginSettingsModal: React.FC<Props> = (props: Props) => {
     <Dialog open={props.showing} onOpenChange={props.setShowing} defaultOpen={false}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Tiyo settings</DialogTitle>
+          <DialogTitle>Source settings</DialogTitle>
         </DialogHeader>
         {loading ? (
           <div className="w-full flex justify-center">

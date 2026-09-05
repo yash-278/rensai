@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ExtensionMetadata } from '@tiyo/common';
-import { useRecoilState, useSetRecoilState } from 'recoil';
+import { useRecoilState } from 'recoil';
 const { ipcRenderer } = require('electron');
 import {
   searchExtensionState,
@@ -10,7 +10,7 @@ import {
 import { FS_METADATA } from '@/common/temp_fs_metadata';
 import ipcChannels from '@/common/constants/ipcChannels.json';
 import { Button } from '@houdoku/ui/components/Button';
-import { HelpCircle, Search } from 'lucide-react';
+import { FolderOpen, HelpCircle, Search, SlidersHorizontal } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -32,14 +32,16 @@ import { Label } from '@houdoku/ui/components/Label';
 interface Props {
   extensionList: ExtensionMetadata[];
   hasFilterOptions: boolean;
+  loading: boolean;
+  filterCount: number;
   handleSearch: (fresh?: boolean) => void;
   handleSearchFilesystem: (searchPaths: string[]) => void;
 }
 
 const SearchControlBar: React.FC<Props> = (props: Props) => {
   const [searchExtension, setSearchExtension] = useRecoilState(searchExtensionState);
-  const setSearchText = useSetRecoilState(searchTextState);
-  const setShowingFilterDrawer = useSetRecoilState(showingFilterDrawerState);
+  const [searchText, setSearchText] = useRecoilState(searchTextState);
+  const [showingFilters, setShowingFilterDrawer] = useRecoilState(showingFilterDrawerState);
   const [multiSeriesEnabled, setMultiSeriesEnabled] = useState(false);
 
   const handleSelectDirectory = async () => {
@@ -62,8 +64,11 @@ const SearchControlBar: React.FC<Props> = (props: Props) => {
 
   const renderFilesystemControls = () => {
     return (
-      <div className="flex space-x-4">
-        <Button onClick={handleSelectDirectory}>Select Directory</Button>
+      <div className="flex flex-wrap items-center gap-4">
+        <Button disabled={props.loading} onClick={handleSelectDirectory}>
+          <FolderOpen />
+          Select directory
+        </Button>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -99,25 +104,34 @@ const SearchControlBar: React.FC<Props> = (props: Props) => {
     return (
       <>
         <form
-          className="flex flex-1 space-x-2"
-          onSubmit={() => {
+          className="flex min-w-0 flex-1 gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
             props.handleSearch(true);
-            return false;
           }}
         >
-          <div className="relative flex-1">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <div className="relative min-w-0 flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              className="pl-8 w-full"
+              className="pl-9 w-full"
+              aria-label="Search for a series"
+              value={searchText}
               placeholder="Search for a series..."
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchText(e.target.value)}
             />
           </div>
-          <Button type="submit">Search</Button>
+          <Button type="submit" disabled={props.loading}>
+            Search
+          </Button>
         </form>
         {props.hasFilterOptions ? (
-          <Button variant="secondary" onClick={() => setShowingFilterDrawer(true)}>
-            Options
+          <Button
+            variant="outline"
+            aria-expanded={showingFilters}
+            onClick={() => setShowingFilterDrawer(!showingFilters)}
+          >
+            <SlidersHorizontal />
+            Filters{props.filterCount > 0 && ` (${props.filterCount})`}
           </Button>
         ) : undefined}
       </>
@@ -125,13 +139,13 @@ const SearchControlBar: React.FC<Props> = (props: Props) => {
   };
 
   return (
-    <div className="flex space-x-2 py-3">
+    <div className="flex flex-wrap items-center gap-3">
       <Select
-        defaultValue={searchExtension}
+        value={searchExtension}
         onValueChange={(value) => setSearchExtension(value || searchExtension)}
       >
-        <SelectTrigger className="max-w-52">
-          <SelectValue placeholder="Select extension" />
+        <SelectTrigger aria-label="Source" className="w-full sm:w-52 shrink-0">
+          <SelectValue placeholder="Select source" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>

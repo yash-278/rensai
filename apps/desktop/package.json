@@ -7,13 +7,19 @@
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
+    "dev:sources": "node scripts/dev-sources.cjs",
+    "test:sources": "node --test tests/local-source-provider.test.cjs",
+    "smoke:sources": "electron scripts/smoke-sources.cjs",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "lint": "biome lint src",
     "check-types": "tsc --noEmit",
     "dist:win": "pnpm electron-builder --publish onTagOrDraft --win",
     "dist:mac": "pnpm electron-builder --publish onTagOrDraft --mac",
-    "dist:linux": "pnpm electron-builder --publish onTagOrDraft --linux"
+    "dist:linux": "pnpm electron-builder --publish onTagOrDraft --linux",
+    "design:preview": "vite --config design-system/vite.config.ts",
+    "design:build": "vite build --config design-system/vite.config.ts",
+    "design:check": "tsc --noEmit --project design-system/tsconfig.json && pnpm design:build && electron design-system/check.cjs && electron design-system/check-search.cjs"
   },
   "build": {
     "productName": "Houdoku",
@@ -116,8 +122,8 @@
   ],
   "homepage": "https://houdoku.org",
   "dependencies": {
-    "@houdoku/ui": "workspace:*",
     "@biomejs/biome": "1.9.4",
+    "@houdoku/ui": "workspace:*",
     "@radix-ui/react-accordion": "^1.2.2",
     "@radix-ui/react-alert-dialog": "^1.1.3",
     "@radix-ui/react-checkbox": "^1.1.2",
@@ -150,9 +156,7 @@
     "@types/react": "18.3.18",
     "@types/react-dom": "^18.0.6",
     "@types/react-router-dom": "^5.3.3",
-    "@types/semver": "^7.3.9",
     "@types/uuid": "^8.3.3",
-    "aki-plugin-manager": "^1.3.3",
     "browserslist-config-erb": "^0.0.3",
     "bufferutil": "^4.0.8",
     "class-variance-authority": "^0.7.1",
@@ -180,7 +184,6 @@
     "recoil": "^0.7.4",
     "regenerator-runtime": "^0.13.5",
     "rimraf": "^6.0.1",
-    "semver": "^7.5.2",
     "source-map-support": "^0.5.21",
     "typescript": "^5.4.5",
     "utf-8-validate": "^6.0.3",

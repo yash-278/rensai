@@ -1,0 +1,152 @@
+/* Rensai design tokens. Raw values live here; components consume semantic roles. */
+:root {
+  --palette-white: 0.00 0.00% 100.00%;
+  --palette-paper: 220.00 17.65% 96.67%;
+  --palette-mist: 217.50 22.22% 92.94%;
+  --palette-line: 216.92 19.40% 86.86%;
+  --palette-steel: 218.00 12.40% 52.55%;
+  --palette-slate: 216.00 17.59% 39.02%;
+  --palette-ink: 218.82 18.68% 17.84%;
+  --palette-night: 220.00 16.98% 10.39%;
+  --palette-panel: 218.57 18.92% 14.51%;
+  --palette-raised: 217.89 19.19% 19.41%;
+  --palette-dark-line: 218.71 19.25% 31.57%;
+  --palette-dark-input: 219.47 15.70% 52.55%;
+  --palette-silver: 217.78 19.42% 72.75%;
+  --palette-ice: 216.00 38.46% 94.90%;
+  --palette-blue: 218.30 63.80% 43.33%;
+  --palette-blue-hover: 218.68 65.41% 36.27%;
+  --palette-blue-light: 218.43 100.00% 82.55%;
+  --palette-blue-light-hover: 218.77 100.00% 87.25%;
+  --palette-blue-wash: 218.18 84.62% 94.90%;
+  --palette-blue-deep: 217.36 39.85% 26.08%;
+  --palette-red: 351.24 63.13% 42.55%;
+  --palette-red-light: 353.08 100.00% 84.71%;
+  --palette-red-wash: 348.00 65.22% 95.49%;
+  --palette-red-deep: 342.86 31.53% 21.76%;
+  --palette-green: 147.35 50.75% 26.27%;
+  --palette-green-light: 142.94 51.52% 74.12%;
+  --palette-green-wash: 135.00 37.50% 93.73%;
+  --palette-green-deep: 144.83 31.18% 18.24%;
+  --palette-amber: 37.63 85.51% 27.06%;
+  --palette-amber-light: 42.42 75.57% 74.31%;
+  --palette-amber-wash: 43.64 76.74% 91.57%;
+  --palette-amber-deep: 40.00 30.00% 19.61%;
+
+  --font-ui: "Inter", system-ui, sans-serif;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --type-caption: 0.75rem;
+  --type-body: 0.875rem;
+  --type-label: 0.875rem;
+  --type-section: 1.125rem;
+  --type-title: 1.5rem;
+  --leading-body: 1.5;
+  --leading-heading: 1.25;
+  --radius-small: 0.25rem;
+  --radius-control: 0.375rem;
+  --radius-panel: 0.625rem;
+  --radius: var(--radius-panel);
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --space-section: var(--space-8);
+  --space-panel: var(--space-6);
+  --space-item: var(--space-3);
+
+  /* Semantic roles. Existing role names remain the public contract. */
+  color-scheme: light;
+  --background: var(--palette-paper);
+  --foreground: var(--palette-ink);
+  --card: var(--palette-white);
+  --card-foreground: var(--foreground);
+  --popover: var(--palette-white);
+  --popover-foreground: var(--foreground);
+  --primary: var(--palette-blue);
+  --primary-hover: var(--palette-blue-hover);
+  --primary-foreground: var(--palette-white);
+  --secondary: var(--palette-mist);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--palette-mist);
+  --muted-foreground: var(--palette-slate);
+  --accent: var(--palette-blue-wash);
+  --accent-foreground: var(--palette-blue-hover);
+  --border: var(--palette-line);
+  --input: var(--palette-steel);
+  --ring: var(--palette-blue);
+  --field: var(--palette-white);
+  --destructive: var(--palette-red);
+  --destructive-foreground: var(--palette-white);
+  --success: var(--palette-green);
+  --success-subtle: var(--palette-green-wash);
+  --warning: var(--palette-amber);
+  --warning-subtle: var(--palette-amber-wash);
+  --danger: var(--palette-red);
+  --danger-subtle: var(--palette-red-wash);
+  --sidebar-background: var(--palette-white);
+  --sidebar-foreground: var(--palette-slate);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+  --shadow-panel: 0 8px 24px hsl(var(--palette-ink) / 0.08);
+
+  /* Shared component measurements. Density changes geometry, not type size. */
+  --control-height: 2.25rem;
+  --control-height-xs: 1.75rem;
+  --control-height-sm: 2rem;
+  --control-height-lg: 2.5rem;
+  --control-padding: var(--space-3);
+  --row-height: 2.75rem;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: var(--palette-night);
+  --foreground: var(--palette-ice);
+  --card: var(--palette-panel);
+  --popover: var(--palette-raised);
+  --primary: var(--palette-blue-light);
+  --primary-hover: var(--palette-blue-light-hover);
+  --primary-foreground: var(--palette-night);
+  --secondary: var(--palette-raised);
+  --muted: var(--palette-raised);
+  --muted-foreground: var(--palette-silver);
+  --accent: var(--palette-blue-deep);
+  --accent-foreground: var(--palette-blue-light);
+  --border: var(--palette-dark-line);
+  --input: var(--palette-dark-input);
+  --ring: var(--palette-blue-light);
+  --field: var(--palette-night);
+  --destructive: var(--palette-red-light);
+  --destructive-foreground: var(--palette-night);
+  --success: var(--palette-green-light);
+  --success-subtle: var(--palette-green-deep);
+  --warning: var(--palette-amber-light);
+  --warning-subtle: var(--palette-amber-deep);
+  --danger: var(--palette-red-light);
+  --danger-subtle: var(--palette-red-deep);
+  --sidebar-background: var(--palette-panel);
+  --sidebar-foreground: var(--palette-silver);
+  --shadow-panel: 0 8px 24px hsl(0 0% 0% / 0.2);
+}
+
+:root[data-density="compact"] {
+  --control-height: 2rem;
+  --control-height-xs: 1.5rem;
+  --control-height-sm: 1.75rem;
+  --control-height-lg: 2.25rem;
+  --row-height: 2.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+  }
+}

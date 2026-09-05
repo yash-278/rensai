@@ -1,8 +1,8 @@
 name: Publish
 on:
-  push:
-    branches:
-      - master
+  # Releases remain manual until the fork has its own product identity,
+  # signing configuration, updater target, and publish destination.
+  workflow_dispatch:
 jobs:
   publish-win:
     strategy:

@@ -1,3 +1,5 @@
+> **Superseded as an execution plan on 2026-09-04.** Preserve the inherited feature set and fix demonstrated development blockers. See [current project direction](../../../PROJECT_DIRECTION.md). Do not execute removal tickets or impose the old migration gates. Research, fixtures, and retained identity decisions are historical reference. Original documents are preserved on `implementation/local-only-graph` at `f68b148`.
+
 # Dependency and toolchain targets for the Houdoku successor
 
 **Researched:** 2026-08-29

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useRecoilState, useRecoilValue } from 'recoil';
+import { useRecoilState } from 'recoil';
 import {
+  FilterValues,
   FilterCheckbox,
   FilterCycle,
   FilterHeader,
@@ -16,11 +17,10 @@ import {
   MultiToggleValues,
   TriState,
 } from '@tiyo/common';
-import {
-  filterValuesMapState,
-  searchExtensionState,
-  showingFilterDrawerState,
-} from '@/renderer/state/searchStates';
+import { showingFilterDrawerState } from '@/renderer/state/searchStates';
+import { Button } from '@houdoku/ui/components/Button';
+import { X } from 'lucide-react';
+import { filterDefaults } from './searchPresentation';
 import SearchFilterMultiToggle from './filter/SearchFilterMultiToggle';
 import SearchFilterSort from './filter/SearchFilterSort';
 import SearchFilterTriCheckbox from './filter/SearchFilterTriCheckbox';
@@ -41,28 +41,23 @@ import { Separator } from '@houdoku/ui/components/Separator';
 
 interface Props {
   filterOptions: FilterOption[];
-  onClose?: (wasChanged: boolean) => void;
+  values: FilterValues;
+  onChange: (values: FilterValues, debounce?: boolean) => void;
 }
 
 const SearchFilterDrawer: React.FC<Props> = (props: Props) => {
-  const searchExtension = useRecoilValue(searchExtensionState);
   const [showingFilterDrawer, setShowingFilterDrawer] = useRecoilState(showingFilterDrawerState);
-  const [filterValuesMap, setFilterValuesMap] = useRecoilState(filterValuesMapState);
-  const [wasChanged, setWasChanged] = useState(false);
-
-  const getOptionValue = (option: FilterOption): unknown => {
-    if (searchExtension in filterValuesMap && option.id in filterValuesMap[searchExtension]) {
-      return filterValuesMap[searchExtension][option.id];
-    }
-    return option.defaultValue;
-  };
-
-  const setOptionValue = (optionId: string, value: unknown) => {
-    const filterValues = filterValuesMap[searchExtension] || {};
-    const newFilterValues = { ...filterValues, [optionId]: value };
-    setFilterValuesMap({ ...filterValuesMap, [searchExtension]: newFilterValues });
-    setWasChanged(true);
-  };
+  const [wide, setWide] = useState(() => window.matchMedia('(min-width: 1200px)').matches);
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1200px)');
+    const update = () => setWide(media.matches);
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  const getOptionValue = (option: FilterOption): unknown =>
+    props.values[option.id] ?? option.defaultValue;
+  const setOptionValue = (optionId: string, value: unknown, debounce = false) =>
+    props.onChange({ ...props.values, [optionId]: value }, debounce);
 
   const renderCheckbox = (option: FilterCheckbox) => {
     return (
@@ -92,13 +87,20 @@ const SearchFilterDrawer: React.FC<Props> = (props: Props) => {
   const renderInput = (option: FilterInput) => {
     return (
       <div key={option.id}>
-        <Label>{option.label}</Label>
+        <Label htmlFor={`filter-${option.id}`}>{option.label}</Label>
         <Input
+          id={`filter-${option.id}`}
           value={getOptionValue(option) as string}
           placeholder={option.placeholder}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setOptionValue(option.id, e.target.value)
+            setOptionValue(option.id, e.target.value, true)
           }
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+              event.preventDefault();
+              props.onChange(props.values);
+            }
+          }}
         />
       </div>
     );
@@ -107,11 +109,12 @@ const SearchFilterDrawer: React.FC<Props> = (props: Props) => {
   const renderSelect = (option: FilterSelect) => {
     return (
       <Select
+        key={option.id}
         value={getOptionValue(option) as string}
         defaultValue={(option.defaultValue as string) || undefined}
         onValueChange={(value) => setOptionValue(option.id, value || '')}
       >
-        <SelectTrigger>
+        <SelectTrigger aria-label={option.label}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -200,30 +203,51 @@ const SearchFilterDrawer: React.FC<Props> = (props: Props) => {
     });
   };
 
-  useEffect(() => {
-    if (showingFilterDrawer) setWasChanged(false);
-  }, [showingFilterDrawer]);
-
-  return (
-    <Sheet
-      open={showingFilterDrawer}
-      onOpenChange={(open) => {
-        if (!open && props.onClose !== undefined) {
-          props.onClose(wasChanged);
-        }
-        setShowingFilterDrawer(open);
-      }}
-    >
-      <SheetContent className="flex flex-col">
-        <SheetHeader>
-          <SheetTitle>Search options</SheetTitle>
-        </SheetHeader>
-        <div className="overflow-y-auto overflow-x-hidden pr-3 pl-1">
-          <div className="flex flex-col space-y-2">{renderControls()}</div>
+  const controls = (
+    <>
+      <div className="min-h-0 flex-1 overflow-y-auto px-1">
+        <div className="flex flex-col gap-4">{renderControls()}</div>
+      </div>
+      <div className="flex items-center justify-between gap-2 border-t pt-4">
+        <p className="text-caption text-muted-foreground">Filters update automatically.</p>
+        <Button
+          variant="outline"
+          onClick={() => props.onChange(filterDefaults(props.filterOptions))}
+        >
+          Reset
+        </Button>
+      </div>
+    </>
+  );
+  if (wide)
+    return showingFilterDrawer ? (
+      <aside
+        aria-label="Search filters"
+        className="flex w-72 shrink-0 flex-col gap-5 border-l bg-card p-panel"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-section-title">Filters</h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Close filters"
+            onClick={() => setShowingFilterDrawer(false)}
+          >
+            <X />
+          </Button>
         </div>
+        {controls}
+      </aside>
+    ) : null;
+  return (
+    <Sheet open={showingFilterDrawer} onOpenChange={setShowingFilterDrawer}>
+      <SheetContent className="flex flex-col gap-5">
+        <SheetHeader>
+          <SheetTitle>Filters</SheetTitle>
+        </SheetHeader>
+        {controls}
       </SheetContent>
     </Sheet>
   );
 };
-
 export default SearchFilterDrawer;

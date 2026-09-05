@@ -36,8 +36,8 @@ export const SeriesEditControls: React.FC<Props> = (props: Props) => {
   };
 
   return (
-    <div className="flex space-x-4">
-      <div className="max-w-40 md:max-w-44 lg:max-w-48 flex flex-col space-y-2">
+    <div className="flex min-w-0 flex-col gap-4 sm:flex-row">
+      <div className="w-40 shrink-0 md:w-44 lg:w-48 flex flex-col space-y-2">
         <ExtensionImage
           className="w-auto h-auto aspect-[70/100] object-cover rounded-sm"
           url={getCoverSrcUrl()}
@@ -78,11 +78,11 @@ export const SeriesEditControls: React.FC<Props> = (props: Props) => {
           </Button>
         </div>
       </div>
-      <div className="flex flex-col space-y-3 w-full">
+      <div className="flex min-w-0 flex-1 flex-col space-y-3">
         <div className="flex space-x-2 items-center">
           <Label className="min-w-20 text-right">Title</Label>
           <Input
-            className="w-full"
+            className="min-w-0 w-full"
             title={props.series.title}
             value={props.series.title}
             placeholder={'Title'}
@@ -95,10 +95,14 @@ export const SeriesEditControls: React.FC<Props> = (props: Props) => {
             disabled={!props.editable}
           />
         </div>
-        <div className="flex space-x-2 items-center">
-          <Label className="min-w-20 text-right">Description</Label>
-          <Input
-            className="w-full"
+        <div className="flex space-x-2 items-start">
+          <Label className="min-w-20 pt-2 text-right" htmlFor="series-description">
+            Description
+          </Label>
+          <textarea
+            id="series-description"
+            className="min-w-0 w-full resize-none rounded-control border border-input bg-field px-control-padding py-2 text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            rows={4}
             placeholder={'Description'}
             title={props.series.description}
             value={props.series.description}
@@ -108,12 +112,13 @@ export const SeriesEditControls: React.FC<Props> = (props: Props) => {
                 description: e.target.value,
               })
             }
-            disabled={!props.editable}
+            readOnly={!props.editable}
           />
         </div>
         <div className="flex space-x-2 items-center">
           <Label className="min-w-20 text-right">Author(s)</Label>
           <InputTags
+            className="min-w-0 [&>div]:max-w-full [&>div]:[overflow-wrap:anywhere] [&>input]:min-w-0"
             placeholder="Authors"
             value={props.series.authors}
             onChange={(values) => props.setSeries({ ...props.series, authors: [...values] })}
@@ -123,6 +128,7 @@ export const SeriesEditControls: React.FC<Props> = (props: Props) => {
         <div className="flex space-x-2 items-center">
           <Label className="min-w-20 text-right">Artist(s)</Label>
           <InputTags
+            className="min-w-0 [&>div]:max-w-full [&>div]:[overflow-wrap:anywhere] [&>input]:min-w-0"
             placeholder="Artists"
             value={props.series.artists}
             onChange={(values) => props.setSeries({ ...props.series, artists: [...values] })}
@@ -132,6 +138,7 @@ export const SeriesEditControls: React.FC<Props> = (props: Props) => {
         <div className="flex space-x-2 items-center">
           <Label className="min-w-20 text-right">Tags</Label>
           <InputTags
+            className="min-w-0 [&>div]:max-w-full [&>div]:[overflow-wrap:anywhere] [&>input]:min-w-0"
             placeholder="Tags"
             value={props.series.tags}
             onChange={(values) => props.setSeries({ ...props.series, tags: [...values] })}
@@ -147,7 +154,7 @@ export const SeriesEditControls: React.FC<Props> = (props: Props) => {
             }
             disabled={!props.editable}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="min-w-0 w-full">
               <SelectValue placeholder="Language" />
             </SelectTrigger>
             <SelectContent>
@@ -168,7 +175,7 @@ export const SeriesEditControls: React.FC<Props> = (props: Props) => {
             }
             disabled={!props.editable}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="min-w-0 w-full">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>

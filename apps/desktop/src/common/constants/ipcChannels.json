@@ -27,13 +27,9 @@
   "GET_ALL_FILES": "get-all-files",
   "EXTENSION_MANAGER": {
     "RELOAD": "extension-manager-reload",
-    "INSTALL": "extension-manager-install",
-    "UNINSTALL": "extension-manager-uninstall",
-    "LIST": "extension-manager-list",
     "GET": "extension-manager-get",
     "GET_ALL": "extension-manager-get-all",
-    "CHECK_FOR_UPDATES": "extension-manager-check-for-updates",
-    "GET_TIYO_VERSION": "extension-manager-get-tiyo-version"
+    "GET_LOCAL_PROVIDER_STATUS": "extension-manager-get-local-provider-status"
   },
   "EXTENSION": {
     "GET_SERIES": "extension-getSeries",

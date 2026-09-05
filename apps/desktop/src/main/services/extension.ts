@@ -9,56 +9,57 @@ import {
   FilterOption,
   TiyoClientInterface,
 } from '@tiyo/common';
-const aki = require('aki-plugin-manager');
-import { BrowserWindow, IpcMain } from 'electron';
+import { createRequire } from 'node:module';
+import { join } from 'node:path';
+import { app, BrowserWindow, IpcMain } from 'electron';
 import { FS_METADATA } from '@/common/temp_fs_metadata';
 import { FSExtensionClient } from './extensions/filesystem';
 import ipcChannels from '@/common/constants/ipcChannels.json';
-import { EXTRACT_DIR, PLUGINS_DIR } from '../util/appdata';
+import { EXTRACT_DIR } from '../util/appdata';
+import { loadLocalSourceProvider, snapshotSourceProvider } from './local-source-provider';
+import type { LocalSourceProviderStatus } from '@/common/models/LocalSourceProviderStatus';
 
-const TIYO_PACKAGE_NAME = '@tiyo/core';
-
-let TIYO_CLIENT: TiyoClientInterface | null = null;
+let SOURCE_EXTENSIONS: ReturnType<TiyoClientInterface['getExtensions']> = {};
+let LOCAL_PROVIDER_STATUS: LocalSourceProviderStatus | undefined;
 let FILESYSTEM_EXTENSION: FSExtensionClient | null = null;
 
 export async function loadPlugins(spoofWindow: BrowserWindow) {
-  if (TIYO_CLIENT !== null) {
-    TIYO_CLIENT = null;
-
-    Object.keys(require.cache).forEach((name) => {
-      if (name.includes(`/${TIYO_PACKAGE_NAME}/`)) {
-        delete require.cache[name];
-      }
-    });
-  }
   if (FILESYSTEM_EXTENSION !== null) {
     FILESYSTEM_EXTENSION = null;
   }
 
-  console.info('Checking for Tiyo plugin...');
-  aki.list(PLUGINS_DIR).forEach((pluginDetails: [string, string]) => {
-    const pluginName = pluginDetails[0];
-    if (pluginName === TIYO_PACKAGE_NAME) {
-      const mod = aki.load(
-        PLUGINS_DIR,
-        pluginName,
-        /**
-         *  TODO can maybe remove this eval now. It was done here to avoid being
-         *  overwritten by webpack, which doesn't seem to happen with vite
-         */
-        eval('require') as NodeRequire,
+  SOURCE_EXTENSIONS = {};
+  LOCAL_PROVIDER_STATUS = undefined;
+  const providerPath = app.isPackaged
+    ? join(process.resourcesPath, 'rensai-sources')
+    : process.env.RENSAI_SOURCES_PATH;
+  if (providerPath) {
+    try {
+      const provider = loadLocalSourceProvider(
+        providerPath,
+        spoofWindow,
+        createRequire(__filename),
       );
-
-      TIYO_CLIENT = new mod.TiyoClient(spoofWindow);
+      SOURCE_EXTENSIONS = snapshotSourceProvider(provider);
+      LOCAL_PROVIDER_STATUS = {
+        version: provider.getVersion(),
+        sourceCount: Object.keys(SOURCE_EXTENSIONS).length,
+      };
       console.info(
-        `Loaded Tiyo plugin v${TIYO_CLIENT!.getVersion()}; it has ${
-          Object.keys(TIYO_CLIENT!.getExtensions()).length
-        } extensions`,
+        `Loaded Rensai Sources v${LOCAL_PROVIDER_STATUS.version} with ${LOCAL_PROVIDER_STATUS.sourceCount} sources.`,
       );
-    } else {
-      console.warn(`Ignoring unsupported plugin: ${pluginName}`);
+    } catch (error) {
+      LOCAL_PROVIDER_STATUS = {
+        error: error instanceof Error ? error.message : String(error),
+      };
+      console.error('Could not load Rensai Sources:', error);
     }
-  });
+  } else {
+    LOCAL_PROVIDER_STATUS = {
+      error:
+        'Rensai Sources is not configured. Start development with pnpm --filter @houdoku/desktop dev:sources.',
+    };
+  }
 
   console.info('Initializing filesystem extension...');
   FILESYSTEM_EXTENSION = new FSExtensionClient(() => new Promise((_resolve, reject) => reject()));
@@ -67,7 +68,9 @@ export async function loadPlugins(spoofWindow: BrowserWindow) {
 
 function getExtensionClient(extensionId: string) {
   if (extensionId === FS_METADATA.id) return FILESYSTEM_EXTENSION as ExtensionClientInterface;
-  return TIYO_CLIENT!.getExtensions()[extensionId].client;
+  const extension = SOURCE_EXTENSIONS[extensionId];
+  if (!extension) throw new Error(`Source ${extensionId} is not loaded.`);
+  return extension.client;
 }
 
 /**
@@ -201,7 +204,7 @@ function search(
 
   return extension.getSearch(text, page, filterValues).catch((err: Error) => {
     console.error(err);
-    return { seriesList: [], hasMore: false };
+    throw err;
   });
 }
 
@@ -221,7 +224,7 @@ function directory(
 
   return extension.getDirectory(page, filterValues).catch((err: Error) => {
     console.error(err);
-    return { seriesList: [], hasMore: false };
+    throw err;
   });
 }
 
@@ -302,46 +305,21 @@ export const createExtensionIpcHandlers = (ipcMain: IpcMain, spoofWindow: Browse
     await loadPlugins(spoofWindow);
     return event.sender.send(ipcChannels.APP.LOAD_STORED_EXTENSION_SETTINGS);
   });
-  ipcMain.handle(ipcChannels.EXTENSION_MANAGER.INSTALL, (_event, name: string, version: string) => {
-    return new Promise<void>((resolve) => {
-      aki.install(name, version, PLUGINS_DIR, () => {
-        resolve();
-      });
-    });
-  });
-  ipcMain.handle(ipcChannels.EXTENSION_MANAGER.UNINSTALL, (_event, name: string) => {
-    return new Promise<void>((resolve) => {
-      aki.uninstall(name, PLUGINS_DIR, () => {
-        resolve();
-      });
-    });
-  });
-  ipcMain.handle(ipcChannels.EXTENSION_MANAGER.LIST, async () => {
-    return aki.list(PLUGINS_DIR);
-  });
   ipcMain.handle(ipcChannels.EXTENSION_MANAGER.GET, async (_event, extensionId: string) => {
     if (extensionId === FS_METADATA.id) {
       return FS_METADATA;
     }
-    if (TIYO_CLIENT && Object.keys(TIYO_CLIENT.getExtensions()).includes(extensionId)) {
-      return TIYO_CLIENT.getExtensions()[extensionId].metadata;
-    }
-    return undefined;
+    return SOURCE_EXTENSIONS[extensionId]?.metadata;
   });
   ipcMain.handle(ipcChannels.EXTENSION_MANAGER.GET_ALL, () => {
     const result = [FS_METADATA];
-    if (TIYO_CLIENT) {
-      result.push(...Object.values(TIYO_CLIENT.getExtensions()).map((e) => e.metadata));
-    }
+    result.push(...Object.values(SOURCE_EXTENSIONS).map((e) => e.metadata));
     return result;
   });
-  ipcMain.handle(ipcChannels.EXTENSION_MANAGER.GET_TIYO_VERSION, () => {
-    return TIYO_CLIENT ? TIYO_CLIENT.getVersion() : undefined;
-  });
-  ipcMain.handle(ipcChannels.EXTENSION_MANAGER.CHECK_FOR_UPDATES, async () => {
-    // TODO: check registry
-    return {};
-  });
+  ipcMain.handle(
+    ipcChannels.EXTENSION_MANAGER.GET_LOCAL_PROVIDER_STATUS,
+    () => LOCAL_PROVIDER_STATUS,
+  );
 
   ipcMain.handle(
     ipcChannels.EXTENSION.GET_SERIES,
