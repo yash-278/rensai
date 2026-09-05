@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { CircleHelp } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@houdoku/ui/components/Tooltip';
 
 /** Keep instructions available after an input's placeholder disappears. */
 export function FieldHelp({
