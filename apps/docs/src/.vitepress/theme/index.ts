@@ -1,21 +1,24 @@
-// https://vitepress.dev/guide/custom-theme
-import { h } from 'vue';
-import type { Theme } from 'vitepress';
-import DefaultTheme from 'vitepress/theme';
-import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client';
-import HDKHome from './components/HDKHome.vue';
-import './style.css';
+import { h } from "vue";
+import { useData, type Theme } from "vitepress";
+import DefaultTheme from "vitepress/theme";
+import { enhanceAppWithTabs } from "vitepress-plugin-tabs/client";
+import RensaiHome from "./components/RensaiHome.vue";
+import "./style.css";
 
 export default {
   extends: DefaultTheme,
-  Layout: () => {
-    return h(DefaultTheme.Layout, null, {
-      // https://vitepress.dev/guide/extending-default-theme#layout-slots
-
-      'home-hero-before': () => h(HDKHome),
-    });
+  Layout: {
+    setup() {
+      const { frontmatter } = useData();
+      return () =>
+        h(
+          frontmatter.value.layout === "home"
+            ? RensaiHome
+            : DefaultTheme.Layout,
+        );
+    },
   },
-  enhanceApp({ app, router, siteData }) {
+  enhanceApp({ app }) {
     enhanceAppWithTabs(app);
   },
 } satisfies Theme;

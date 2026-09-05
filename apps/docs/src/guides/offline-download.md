@@ -1,6 +1,6 @@
-# Offline Download
+# Offline downloads
 
-Houdoku allows you to download chapters so that you can read them when you're offline.
+Rensai allows you to download chapters so that you can read them when you're offline.
 
 ## Downloading chapters
 
