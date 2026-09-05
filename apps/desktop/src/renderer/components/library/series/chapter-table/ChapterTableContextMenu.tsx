@@ -1,90 +1,39 @@
-import React from 'react';
-import { Chapter, Series } from '@tiyo/common';
-const { ipcRenderer } = require('electron');
-import { useNavigate } from 'react-router-dom';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
-import { downloaderClient, DownloadTask } from '@/renderer/services/downloader';
-import { markChapters } from '@/renderer/features/library/utils';
-import routes from '@/common/constants/routes.json';
-import ipcChannels from '@/common/constants/ipcChannels.json';
-import {
-  chapterListState,
-  seriesState,
-  sortedFilteredChapterListState,
-} from '@/renderer/state/libraryStates';
-import { chapterLanguagesState, customDownloadsDirState } from '@/renderer/state/settingStates';
 import { ContextMenuContent, ContextMenuItem } from '@houdoku/ui/components/ContextMenu';
+import { DropdownMenuContent, DropdownMenuItem } from '@houdoku/ui/components/DropdownMenu';
 import { Download, Eye, EyeOff, Play, Pointer } from 'lucide-react';
 
-const defaultDownloadsDir = await ipcRenderer.invoke(ipcChannels.GET_PATH.DEFAULT_DOWNLOADS_DIR);
-
 type Props = {
-  series: Series;
-  chapter: Chapter;
-  selectFunc: (chapters: Chapter[]) => void;
+  context?: boolean;
+  read: boolean;
+  canDownload: boolean;
+  retry: boolean;
+  onRead: () => void;
+  onMark: () => void;
+  onSelectPrevious: () => void;
+  onDownload: () => void;
 };
-
-export const ChapterTableContextMenu: React.FC<Props> = (props: Props) => {
-  const navigate = useNavigate();
-  const setChapterList = useSetRecoilState(chapterListState);
-  const setSeries = useSetRecoilState(seriesState);
-  const customDownloadsDir = useRecoilValue(customDownloadsDirState);
-  const chapterLanguages = useRecoilValue(chapterLanguagesState);
-  const sortedFilteredChapterList = useRecoilValue(sortedFilteredChapterListState);
-
-  const handleRead = () => {
-    navigate(`${routes.READER}/${props.series.id}/${props.chapter.id}`);
-  };
-
-  const handleMarkRead = (read: boolean) => {
-    markChapters([props.chapter], props.series, read, setChapterList, setSeries, chapterLanguages);
-  };
-
-  const handleSelectPrevious = () => {
-    const previousChapters = sortedFilteredChapterList.filter(
-      (chapter: Chapter) =>
-        props.chapter !== undefined &&
-        parseFloat(chapter.chapterNumber) < parseFloat(props.chapter.chapterNumber),
-    );
-    props.selectFunc(previousChapters);
-  };
-
-  const handleDownload = () => {
-    downloaderClient.add([
-      {
-        chapter: props.chapter,
-        series: props.series,
-        downloadsDir: customDownloadsDir || defaultDownloadsDir,
-      } as DownloadTask,
-    ]);
-    downloaderClient.start();
-  };
-
+// Both entry points expose the same actions and use the same chapter IDs.
+export function ChapterTableContextMenu({ context = true, ...props }: Props) {
+  const Content = context ? ContextMenuContent : DropdownMenuContent;
+  const Item = context ? ContextMenuItem : DropdownMenuItem;
   return (
-    <ContextMenuContent className="w-48">
-      <ContextMenuItem onClick={handleRead}>
+    <Content className="w-48">
+      <Item onSelect={props.onRead}>
         <Play className="h-4 w-4 mr-2" />
         Read chapter
-      </ContextMenuItem>
-      {props.chapter.read ? (
-        <ContextMenuItem onClick={() => handleMarkRead(false)}>
-          <EyeOff className="h-4 w-4 mr-2" />
-          Mark unread
-        </ContextMenuItem>
-      ) : (
-        <ContextMenuItem onClick={() => handleMarkRead(true)}>
-          <Eye className="h-4 w-4 mr-2" />
-          Mark read
-        </ContextMenuItem>
-      )}
-      <ContextMenuItem onClick={handleSelectPrevious}>
+      </Item>
+      <Item onSelect={props.onMark}>
+        {props.read ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
+        {props.read ? 'Mark unread' : 'Mark read'}
+      </Item>
+      <Item onSelect={props.onSelectPrevious}>
         <Pointer className="h-4 w-4 mr-2" />
         Select previous
-      </ContextMenuItem>
-      <ContextMenuItem onClick={handleDownload}>
+      </Item>
+      <Item disabled={!props.canDownload} onSelect={props.onDownload}>
         <Download className="h-4 w-4 mr-2" />
-        Download
-      </ContextMenuItem>
-    </ContextMenuContent>
+        {props.retry ? 'Retry download' : 'Download'}
+      </Item>
+    </Content>
   );
-};
+}

@@ -1,8 +1,15 @@
-import React from 'react';
-const { ipcRenderer } = require('electron');
-import { useRecoilState } from 'recoil';
+import { useState } from 'react';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+import { Check, Moon, Sun } from 'lucide-react';
+import { Button } from '@houdoku/ui/components/Button';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '@houdoku/ui/components/Dialog';
 import { ApplicationTheme } from '@/common/models/types';
-import ipcChannels from '@/common/constants/ipcChannels.json';
+import ipc from '@/common/constants/ipcChannels.json';
 import { createBackup, restoreBackup } from '@/renderer/util/backup';
 import {
   autoBackupState,
@@ -10,147 +17,195 @@ import {
   themeState,
   autoCheckForUpdatesState,
 } from '@/renderer/state/settingStates';
-import { Checkbox } from '@houdoku/ui/components/Checkbox';
-import { Label } from '@houdoku/ui/components/Label';
-import { Switch } from '@houdoku/ui/components/Switch';
-import { Input } from '@houdoku/ui/components/Input';
-import { Button } from '@houdoku/ui/components/Button';
-import { RadioGroup } from '@houdoku/ui/components/RadioGroup';
-import { cn } from '@houdoku/ui/util';
-
-export const SettingsGeneral: React.FC = () => {
+import { NumberPreference, togglePreference, type Preference } from './SettingsFields';
+import library from '@/renderer/services/library';
+import { seriesListState, seriesState, chapterListState } from '@/renderer/state/libraryStates';
+const { ipcRenderer } = require('electron');
+function ThemePreference() {
   const [theme, setTheme] = useRecoilState(themeState);
-  const [autoCheckForUpdates, setAutoCheckForUpdates] = useRecoilState(autoCheckForUpdatesState);
-  const [autoBackup, setAutoBackup] = useRecoilState(autoBackupState);
-  const [autoBackupCount, setAutoBackupCount] = useRecoilState(autoBackupCountState);
-
-  const handleRestoreBackup = () => {
-    ipcRenderer
-      .invoke(
-        ipcChannels.APP.SHOW_OPEN_DIALOG,
-        false,
-        [
-          {
-            name: 'Houdoku Backup',
-            extensions: ['json'],
-          },
-        ],
-        'Select backup file',
-      )
-      .then((fileList: string) => {
-        if (fileList.length > 0) {
-          return ipcRenderer.invoke(ipcChannels.APP.READ_ENTIRE_FILE, fileList[0]);
-        }
-        return false;
-      })
-      .then((fileContent: string) => {
-        if (fileContent) restoreBackup(fileContent);
-      })
-      .catch(console.error);
-  };
-
   return (
-    <>
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="checkboxCheckForUpdatesAutomatically"
-          checked={autoCheckForUpdates}
-          onCheckedChange={(checked) => setAutoCheckForUpdates(checked === true)}
-        />
-        <Label htmlFor="checkboxCheckForUpdatesAutomatically" className="font-normal">
-          Check for Houdoku updates automatically
-        </Label>
-      </div>
-
-      <div className="flex flex-col space-y-2">
-        <div>
-          <h3 className="pb-0 mb-0 font-medium">Theme</h3>
-          <p className="text-muted-foreground text-sm pt-0 !mt-0">Select the application theme.</p>
-        </div>
-
-        <RadioGroup className="grid max-w-md grid-cols-2 gap-8">
-          <div className="cursor-pointer" onClick={() => setTheme(ApplicationTheme.Light)}>
-            <div
-              className={cn(
-                'items-center rounded-md border-2 p-1',
-                theme === ApplicationTheme.Light ? 'border-foreground' : 'border-muted',
-              )}
-            >
-              <div className="space-y-2 rounded-sm bg-[#ecedef] p-2">
-                <div className="space-y-2 rounded-md bg-white p-2 shadow-sm">
-                  <div className="h-2 w-[80px] rounded-lg bg-[#ecedef]" />
-                  <div className="h-2 w-[100px] rounded-lg bg-[#ecedef]" />
-                </div>
-                <div className="flex items-center space-x-2 rounded-md bg-white p-2 shadow-sm">
-                  <div className="h-4 w-4 rounded-full bg-[#ecedef]" />
-                  <div className="h-2 w-[100px] rounded-lg bg-[#ecedef]" />
-                </div>
-              </div>
-            </div>
-            <span className="block w-full text-center text-sm font-medium pt-1">Light</span>
-          </div>
-          <div className="cursor-pointer" onClick={() => setTheme(ApplicationTheme.Dark)}>
-            <div
-              className={cn(
-                'items-center rounded-md border-2 p-1',
-                theme === ApplicationTheme.Dark ? 'border-foreground' : 'border-muted',
-              )}
-            >
-              <div className="space-y-2 rounded-sm bg-slate-950 p-2">
-                <div className="space-y-2 rounded-md bg-slate-800 p-2 shadow-sm">
-                  <div className="h-2 w-[80px] rounded-lg bg-slate-400" />
-                  <div className="h-2 w-[100px] rounded-lg bg-slate-400" />
-                </div>
-                <div className="flex items-center space-x-2 rounded-md bg-slate-800 p-2 shadow-sm">
-                  <div className="h-4 w-4 rounded-full bg-slate-400" />
-                  <div className="h-2 w-[100px] rounded-lg bg-slate-400" />
-                </div>
-              </div>
-            </div>
-            <span className="block w-full text-center text-sm font-medium pt-1">Dark</span>
-          </div>
-        </RadioGroup>
-      </div>
-
-      <div className="flex flex-col space-y-2">
-        <div>
-          <h3 className="pb-0 mb-0 font-medium">Backup</h3>
-          <p className="text-muted-foreground text-sm pt-0 !mt-0">
-            Options for backing up your data.
-          </p>
-        </div>
-
-        <div className="flex space-x-2">
-          <Button size="sm" onClick={createBackup}>
-            Create Backup
-          </Button>
-          <Button size="sm" onClick={handleRestoreBackup}>
-            Restore Backup
-          </Button>
-        </div>
-        <div className="border rounded-lg p-4 flex flex-col space-y-2">
-          <div className="space-y-2 flex flex-row items-center justify-between">
-            <div className="space-y-0.5">
-              <span>Automatic backups</span>
-              <p className="text-sm text-muted-foreground">Automatically backup your library.</p>
-            </div>
-            <Switch checked={autoBackup} onCheckedChange={(checked) => setAutoBackup(checked)} />
-          </div>
-          {autoBackup && (
-            <div className="flex items-center space-x-2">
-              <span>Create up to</span>
-              <Input
-                className="max-w-20"
-                type="number"
-                value={autoBackupCount}
-                min={1}
-                onChange={(e) => setAutoBackupCount(+e.target.value)}
-              />
-              <span>daily backups.</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </>
+    <div className="settings-theme-options" role="group" aria-labelledby="appearance-label">
+      {[ApplicationTheme.Light, ApplicationTheme.Dark].map((value) => (
+        <button
+          key={value}
+          type="button"
+          className={`settings-theme-choice ${value === ApplicationTheme.Dark ? 'theme-dark' : 'theme-light'}`}
+          aria-pressed={theme === value}
+          onClick={() => setTheme(value)}
+        >
+          <span className="settings-theme-sample" aria-hidden="true">
+            <span className="sample-sidebar" />
+            <span className="sample-content">
+              <i />
+              <i />
+              <i />
+            </span>
+          </span>
+          <span className="settings-theme-label">
+            {value === ApplicationTheme.Dark ? <Moon size={16} /> : <Sun size={16} />}{' '}
+            {value === ApplicationTheme.Dark ? 'Dark' : 'Light'}
+            {theme === value && <Check size={16} />}
+          </span>
+        </button>
+      ))}
+    </div>
   );
-};
+}
+function BackupCount() {
+  const enabled = useRecoilValue(autoBackupState);
+  const [value, setValue] = useRecoilState(autoBackupCountState);
+  return (
+    <NumberPreference
+      id="backupCount"
+      value={value}
+      onChange={setValue}
+      min={1}
+      disabled={!enabled}
+    />
+  );
+}
+function BackupActions() {
+  const setSeriesList = useSetRecoilState(seriesListState);
+  const [selectedSeries, setSelectedSeries] = useRecoilState(seriesState);
+  const setChapters = useSetRecoilState(chapterListState);
+  const [confirmation, setConfirmation] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const restore = async () => {
+    setBusy(true);
+    setError('');
+    setStatus('');
+    try {
+      const paths: string[] = await ipcRenderer.invoke(
+        ipc.APP.SHOW_OPEN_DIALOG,
+        false,
+        [{ name: 'Houdoku Backup', extensions: ['json'] }],
+        'Select backup file',
+      );
+      if (!Array.isArray(paths)) throw Error('Picker failed');
+      if (paths.length) {
+        const content: string = await ipcRenderer.invoke(ipc.APP.READ_ENTIRE_FILE, paths[0]);
+        restoreBackup(content);
+        setSeriesList(library.fetchSeriesList());
+        if (selectedSeries?.id) {
+          setSelectedSeries(library.fetchSeries(selectedSeries.id) || undefined);
+          setChapters(library.fetchChapters(selectedSeries.id));
+        }
+        setStatus('Library backup restored.');
+      }
+      setConfirmation(false);
+    } catch {
+      setError(
+        'Could not restore the backup. Check that the file is a valid Houdoku backup and try again.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="settings-operation">
+      <div className="settings-inline-actions">
+        <Button
+          variant="outline"
+          disabled={busy}
+          onClick={async () => {
+            setError('');
+            setStatus('');
+            try {
+              await createBackup();
+              setStatus('Backup download started.');
+            } catch {
+              setError('Could not create a backup. Try again.');
+            }
+          }}
+        >
+          Create backup
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setError('');
+            setConfirmation(true);
+          }}
+        >
+          Restore…
+        </Button>
+      </div>
+      {status && <p role="status">{status}</p>}
+      {error && !confirmation && <p role="alert">{error}</p>}
+      <Dialog
+        open={confirmation}
+        onOpenChange={(value) => {
+          if (!busy) setConfirmation(value);
+        }}
+      >
+        <DialogContent
+          className="settings-action-dialog"
+          onEscapeKeyDown={(e) => {
+            if (busy) e.preventDefault();
+          }}
+        >
+          <DialogTitle>Restore a backup?</DialogTitle>
+          <DialogDescription>
+            Choose a backup file to restore series and chapters. Read progress is retained from both
+            libraries. Application preferences are not restored.
+          </DialogDescription>
+          {error && <p role="alert">{error}</p>}
+          <div className="settings-inline-actions settings-confirm-actions">
+            <Button variant="outline" disabled={busy} onClick={() => setConfirmation(false)}>
+              Cancel
+            </Button>
+            <Button disabled={busy} onClick={restore}>
+              {busy ? 'Restoring…' : 'Choose backup and restore'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+export const generalPreferences: Preference[] = [
+  {
+    id: 'appearance',
+    section: 'general',
+    group: 'Appearance',
+    title: 'Theme',
+    description: 'Choose a light or dark appearance.',
+    keywords: 'color colour mode',
+    wide: true,
+    control: <ThemePreference />,
+  },
+  togglePreference(
+    'updates',
+    'general',
+    'Application',
+    'Check for updates automatically',
+    'Check for a new application version when Rensai starts.',
+    autoCheckForUpdatesState,
+  ),
+  togglePreference(
+    'autoBackup',
+    'general',
+    'Backups',
+    'Daily backups',
+    'Keep a local backup on days you use the app.',
+    autoBackupState,
+  ),
+  {
+    id: 'backupCount',
+    section: 'general',
+    group: 'Backups',
+    title: 'Backups to keep',
+    description: 'Older daily backups are removed at this limit. Turn on daily backups to edit.',
+    control: <BackupCount />,
+  },
+  {
+    id: 'backup',
+    section: 'general',
+    group: 'Backups',
+    title: 'Manual backup',
+    description: 'Export a backup or restore library data from an existing file.',
+    control: <BackupActions />,
+  },
+];

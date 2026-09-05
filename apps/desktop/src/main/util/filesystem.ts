@@ -1,3 +1,4 @@
+import { DOWNLOAD_INCOMPLETE_FILE } from '@/common/constants/downloads';
 import fs from 'fs';
 import path from 'path';
 import { rimraf } from 'rimraf';
@@ -81,6 +82,7 @@ export function getAllDownloadedChapterIds(downloadsDir: string): string[] {
 
   const result: string[] = [];
   chapterDirs.forEach((name) => {
+    if (fs.existsSync(path.join(name, DOWNLOAD_INCOMPLETE_FILE))) return;
     const regex = /(?:[a-f\d]{8}-[a-f\d]{4}-4[a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12})/i;
     const match = name.match(regex);
     if (match) result.push(match[0]);
@@ -109,6 +111,7 @@ export async function getChaptersDownloaded(
 
   const result: { [key: string]: boolean } = {};
   chapterDirectories.forEach((fullpath) => {
+    if (fs.existsSync(path.join(fullpath, DOWNLOAD_INCOMPLETE_FILE))) return;
     const matching = chapters.find((c) => {
       if (!c.id) return false;
       return path.basename(fullpath).includes(c.id);

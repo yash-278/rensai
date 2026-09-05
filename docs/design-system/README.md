@@ -1,6 +1,6 @@
 # Rensai design foundations
 
-The neutral charcoal, cool white, and blue direction is approved. The token foundation is implemented, and Add Series is the first production page migrated.
+The neutral charcoal, cool white, and blue direction is approved. The token foundation is implemented, and Add Series, Library, Series details, Downloads, Sources, and Settings are migrated production pages.
 
 ## Review the design
 
@@ -13,6 +13,16 @@ pnpm --filter @houdoku/desktop design:preview
 Open the localhost URL printed by Vite. The preview uses the actual shared components and token stylesheet, with fictional series and no Electron IPC or source requests. Try light/dark, comfortable/compact, filters, search, details, and adding a sample series. The Foundations and Components views expose the visual rules and states.
 
 Open `/search.html` on the same server to review the production Add Series component. It uses an offline IPC fixture, fictional covers, and an in-memory import queue. The sidebar is illustrative. It never connects to a source, opens a database, or imports into the user's library.
+
+Open `/library.html` to review the [production Library](library.md) with fictional saved series: continue reading, four collection views, immediate local filters, and fixed selection actions. The fixture uses the real Library component and storage service with synthetic IPC responses.
+
+Open `/series.html` to review the [production Series details and chapters](series.md) with synthetic saved metadata, chapters, and download states. Switch between sample, long-metadata, empty, refresh-failure, local-series, and source-preview scenarios. The fixture intercepts IPC and does not open the application profile.
+
+Open `/downloads.html` to review [production Downloads](downloads.md): an active-download summary, Queue and Downloaded views, fixed selection actions, retry, and grouped offline chapters. The real component and worker use synthetic filesystem and image responses; user files and live sources are untouched.
+
+Open `/sources.html` to review [production Sources](sources.md). The real page and settings service use synthetic provider IPC and sample settings in the isolated review profile. The desktop application profile and live sources are untouched.
+
+Open `/settings.html` to review [production Settings](settings.md): searchable preferences, six sections, and a fixed header and Done button. The real preference persistence and account/file handlers run with synthetic IPC in the isolated review profile.
 
 ```sh
 pnpm --filter @houdoku/desktop design:check
@@ -31,6 +41,8 @@ Inter is bundled locally. Body text is 14 px with 1.5 line height; captions are 
 Spacing uses a 4 px base with 4, 8, 12, 16, 24, and 32 px steps. Controls use 6 px corners; panels use 10 px. Comfortable controls are 36 px tall and compact controls are 32 px. Density changes control geometry while retaining text size. Cover density is a separate page concern.
 
 Use primary buttons for the main action, outlined or secondary buttons for supporting actions, and text with status colors for feedback. States must have words or icons as well as color. Labels stay outside inputs. Keyboard focus uses a two-pixel ring and offset. Controls use 120 ms color transitions; token-driven motion is disabled for reduced-motion preferences.
+
+Keep placeholders to a short example or empty-state hint. Put syntax and format instructions in `FieldHelp` beside the label, using a help icon that opens on hover, focus, or click and dismisses with Escape. The tooltip wraps within the window. Link the input to its persistent description with `aria-describedby`, so instructions remain available after typing and to screen readers. Source inputs can provide optional plain-text `helpText` metadata; sources without it retain their existing controls. nhentai uses this for search syntax and count/date comparisons instead of long placeholders and instruction headings.
 
 ## Public interface
 
@@ -85,14 +97,17 @@ We applied the comparison process from [design-an-interface](https://www.skills.
 - The Add Series dialog keeps its header and action buttons outside the scrollable details area. Long descriptions scroll within a multiline field, tags wrap within the content width, and the cover stacks above metadata in narrow windows. Rendered checks cover long metadata at desktop, 640 x 420, and 360 x 420 window sizes.
 - Search submission without page reload, pagination using the submitted query, stale-response protection, and visible source/detail failures with retry. Single-series and multi-series local imports retain their existing flow.
 
-Shared styling affects existing pages immediately. Pages other than Add Series retain their current layout. Unmigrated hardcoded page styles, animations, and one-off components will be reviewed as each page moves to the foundation; this is not a claim of a complete accessibility audit.
+Shared styling affects existing pages immediately. Pages other than Add Series, Library, Series details, Downloads, Sources, and Settings retain their current layout. Unmigrated hardcoded page styles, animations, and one-off components will be reviewed as each page moves to the foundation; this is not a claim of a complete accessibility audit.
 
 ## Page rollout
 
 1. Visual direction approved.
 2. Add Series migrated. Cover density is independent of the Library column preference and lasts for the application session. It is separate from the global control-density tokens.
-3. Library: reuse proven series presentation with reading progress and library actions.
-4. Series details and chapters, then Downloads, Sources, and Settings.
+3. Library migrated: actual chapter progress, Continue reading, four views, immediate filters, preserved column/crop preferences, visible and right-click actions, fixed bulk actions, and refresh failure/retry. See [Library behavior and checks](library.md).
+4. Series details and chapters migrated: fixed header and selection actions, independent metadata/chapter scrolling, live download states, local filters, and preserved reader, tracker, edit, and download actions. See [Series behavior and checks](series.md).
+5. Downloads migrated: persistent progress and selection actions, real pause/resume, queue ordering/removal/retry, grouped files, confirmed deletion, and incomplete-download tracking. See [Downloads behavior and checks](downloads.md).
+6. Sources migrated: searchable catalog, per-source settings, masked credentials, fixed actions, failure/retry, and awaited restoration after reload. See [Sources behavior and checks](sources.md).
+7. Settings migrated: searchable preferences, six sections, fixed dialog actions, preserved persistence, native backup/folder actions, and tracker authentication with visible failures. See [Settings behavior and checks](settings.md).
 
 Each page should use the foundation, retain its existing capabilities, and receive focused interaction and visual checks before moving to the next page.
 

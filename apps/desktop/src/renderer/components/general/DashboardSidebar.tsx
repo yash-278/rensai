@@ -196,7 +196,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
             <SidebarMenuItem>
               <SidebarMenuButton onClick={() => navigate(routes.PLUGINS)}>
                 <Blocks />
-                <span>Plugins</span>
+                <span>Sources</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>

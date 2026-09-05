@@ -135,6 +135,39 @@ app
     assert.ok(
       await run(() => document.querySelector('aside[aria-label="Search filters"]') !== null),
     );
+    const helpRequests = await requestCount();
+    await run(() => document.querySelector('[aria-label="Help for Author"]').focus());
+    await until(`document.querySelector('[role="tooltip"]')!==null`);
+    assert.ok(
+      await run(() =>
+        document.querySelector('[role="tooltip"]').textContent.includes('exact phrase'),
+      ),
+    );
+    assert.ok(
+      await run(() =>
+        document
+          .getElementById(document.querySelector('#filter-author').getAttribute('aria-describedby'))
+          .textContent.includes('exclude'),
+      ),
+    );
+    await screenshot('filter-help-dark.png');
+    window.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'ESCAPE' });
+    await until(`document.querySelector('[role="tooltip"]')===null`);
+    await click('Help for Author');
+    await until(`document.querySelector('[role="tooltip"]')!==null`);
+    await run(() => document.querySelector('#filter-author').focus());
+    await until(`document.querySelector('[role="tooltip"]')===null`);
+    assert.equal(await requestCount(), helpRequests, 'Opening field help does not apply filters');
+    const helpPoint = await run(() => {
+      const r = document.querySelector('[aria-label="Help for Author"]').getBoundingClientRect();
+      return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) };
+    });
+    window.webContents.sendInputEvent({ type: 'mouseMove', ...helpPoint });
+    await until(`document.querySelector('[role="tooltip"]')!==null`);
+    window.webContents.sendInputEvent({ type: 'mouseMove', x: 200, y: 200 });
+    await settle();
+    window.webContents.sendInputEvent({ type: 'mouseMove', x: 210, y: 210 });
+    await until(`document.querySelector('[role="tooltip"]')===null`);
     await screenshot('add-series-dark.png');
     assert.equal(
       await run(() =>
@@ -431,6 +464,23 @@ app
     await click('Filters');
     assert.ok(await run(() => document.querySelector('[role="dialog"]') !== null));
     assert.ok(await run(() => document.documentElement.scrollWidth <= innerWidth));
+    await click('Help for Author');
+    await until(`document.querySelector('[role="tooltip"]')!==null`);
+    assert.ok(
+      await run(() => {
+        const visible = document
+          .querySelector('[data-radix-popper-content-wrapper]')
+          .getBoundingClientRect();
+        return visible.left >= 0 && visible.right <= innerWidth;
+      }),
+    );
+    await screenshot('filter-help-narrow.png');
+    window.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'ESCAPE' });
+    await until(`document.querySelector('[role="tooltip"]')===null`);
+    assert.ok(
+      await run(() => document.querySelector('[role="dialog"]') !== null),
+      'Escape dismisses help before its filter drawer',
+    );
     await screenshot('add-series-narrow.png');
     await click('Close');
     assert.equal(await run(() => document.querySelector('[role="dialog"]') !== null), false);

@@ -1,16 +1,10 @@
-const fs = require('fs');
-import path from 'path';
-import React, { useEffect } from 'react';
-const { ipcRenderer } = require('electron');
 import { Series } from '@tiyo/common';
 import { useRecoilState, useRecoilValue } from 'recoil';
 import { useNavigate } from 'react-router-dom';
-import blankCover from '@/renderer/img/blank_cover.png';
-import ipcChannels from '@/common/constants/ipcChannels.json';
-import constants from '@/common/constants/constants.json';
 import {
   multiSelectEnabledState,
   multiSelectSeriesListState,
+  categoryListState,
 } from '@/renderer/state/libraryStates';
 import {
   libraryColumnsState,
@@ -18,140 +12,172 @@ import {
   libraryViewState,
 } from '@/renderer/state/settingStates';
 import { goToSeries } from '@/renderer/features/library/utils';
-import ExtensionImage from '../general/ExtensionImage';
+import { ReadingProgress } from '@/renderer/features/library/readingProgress';
 import { LibraryView } from '@/common/models/types';
 import LibraryGridContextMenu from './LibraryGridContextMenu';
-import { FS_METADATA } from '@/common/temp_fs_metadata';
+import LibraryCover from './LibraryCover';
 import { ContextMenu, ContextMenuTrigger } from '@houdoku/ui/components/ContextMenu';
-import { cn } from '@houdoku/ui/util';
+import { DropdownMenu, DropdownMenuTrigger } from '@houdoku/ui/components/DropdownMenu';
+import { Button } from '@houdoku/ui/components/Button';
+import { Checkbox } from '@houdoku/ui/components/Checkbox';
+import { Badge } from '@houdoku/ui/components/Badge';
+import { MoreHorizontal } from 'lucide-react';
 
-const thumbnailsDir = await ipcRenderer.invoke(ipcChannels.GET_PATH.THUMBNAILS_DIR);
-if (!fs.existsSync(thumbnailsDir)) {
-  fs.mkdirSync(thumbnailsDir);
-}
-
-type Props = {
-  getFilteredList: () => Series[];
+export default function LibraryGrid({
+  seriesList,
+  progress,
+  showRemoveModal,
+  continueReading,
+}: {
+  seriesList: Series[];
+  progress: Map<string, ReadingProgress>;
   showRemoveModal: (series: Series) => void;
-};
-
-const LibraryGrid: React.FC<Props> = (props: Props) => {
+  continueReading: (series: Series) => void;
+}) {
   const navigate = useNavigate();
-  const libraryView = useRecoilValue(libraryViewState);
-  const libraryColumns = useRecoilValue(libraryColumnsState);
-  const libraryCropCovers = useRecoilValue(libraryCropCoversState);
-  const [multiSelectEnabled, setMultiSelectEnabled] = useRecoilState(multiSelectEnabledState);
-  const [multiSelectSeriesList, setMultiSelectSeriesList] = useRecoilState(
-    multiSelectSeriesListState,
+  const view = useRecoilValue(libraryViewState);
+  const columns = useRecoilValue(libraryColumnsState);
+  const crop = useRecoilValue(libraryCropCoversState);
+  const selecting = useRecoilValue(multiSelectEnabledState);
+  const [selected, setSelected] = useRecoilState(multiSelectSeriesListState);
+  const categories = useRecoilValue(categoryListState);
+  const list = view === LibraryView.List;
+  const covers = view === LibraryView.GridCoversOnly;
+  const toggle = (series: Series) =>
+    setSelected((prev) =>
+      prev.some((s) => s.id === series.id)
+        ? prev.filter((s) => s.id !== series.id)
+        : [...prev, series],
+    );
+  const menu = (series: Series) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label={`Actions for ${series.title}`}>
+          <MoreHorizontal />
+        </Button>
+      </DropdownMenuTrigger>
+      <LibraryGridContextMenu dropdown series={series} showRemoveModal={showRemoveModal} />
+    </DropdownMenu>
   );
-
-  const viewFunc = (series: Series) => {
-    goToSeries(series, navigate);
-  };
-
-  /**
-   * Get the cover image source of a series.
-   * If the series id is non-undefined (i.e. it is in the user's library) we first try to find the
-   * downloaded thumbnail image. If it doesn't exist, we return the blankCover path.
-   * @param series
-   * @returns the cover image for a series, which can be put in an <img> tag
-   */
-  const getImageSource = (series: Series) => {
-    const fileExtensions = constants.IMAGE_EXTENSIONS;
-    for (let i = 0; i < fileExtensions.length; i += 1) {
-      const thumbnailPath = path.join(thumbnailsDir, `${series.id}.${fileExtensions[i]}`);
-      if (fs.existsSync(thumbnailPath)) return `atom://${encodeURIComponent(thumbnailPath)}`;
-    }
-
-    if (series.extensionId === FS_METADATA.id) {
-      return series.remoteCoverUrl
-        ? `atom://${encodeURIComponent(series.remoteCoverUrl)}`
-        : blankCover;
-    }
-    return series.remoteCoverUrl || blankCover;
-  };
-
-  useEffect(() => {
-    if (multiSelectSeriesList.length === 0) setMultiSelectEnabled(false);
-  }, [multiSelectSeriesList]);
-
+  const minWidth = view === LibraryView.GridCompact ? 136 : 176;
   return (
     <div
-      className={cn(
-        libraryColumns === 2 && 'grid-cols-2',
-        libraryColumns === 4 && 'grid-cols-4',
-        libraryColumns === 6 && 'grid-cols-6',
-        libraryColumns === 8 && 'grid-cols-8',
-        `grid gap-2`,
-      )}
+      className={list ? 'library-list' : 'library-book-grid'}
+      data-view={view}
+      style={
+        list
+          ? undefined
+          : {
+              gridTemplateColumns:
+                columns === 0
+                  ? `repeat(auto-fill,minmax(min(100%,${minWidth}px),1fr))`
+                  : `repeat(${columns},minmax(0,1fr))`,
+            }
+      }
     >
-      {props.getFilteredList().map((series: Series) => {
-        const coverSource = getImageSource(series).replaceAll('\\', '/');
-        const isMultiSelected = multiSelectSeriesList.includes(series);
-
+      {seriesList.map((series) => {
+        const summary = progress.get(series.id!)!;
+        const isSelected = selecting && selected.some((s) => s.id === series.id);
+        const open = () => (selecting ? toggle(series) : goToSeries(series, navigate));
         return (
-          <div key={`${series.id}-${series.title}`} className="space-y-2">
-            <ContextMenu>
-              <ContextMenuTrigger>
-                <div
-                  className="relative overflow-hidden cursor-pointer"
-                  onClick={() => {
-                    if (multiSelectEnabled) {
-                      if (isMultiSelected) {
-                        setMultiSelectSeriesList(multiSelectSeriesList.filter((s) => s !== series));
-                      } else {
-                        setMultiSelectSeriesList([...multiSelectSeriesList, series]);
-                      }
-                    } else {
-                      viewFunc(series);
-                    }
-                  }}
-                >
-                  <ExtensionImage
-                    url={coverSource}
-                    series={series}
-                    alt={series.title}
-                    className={cn(
-                      !multiSelectEnabled && 'hover:scale-105',
-                      multiSelectEnabled && isMultiSelected && 'border-4 border-sky-500',
-                      libraryCropCovers && 'aspect-[70/100]',
-                      'h-auto w-full object-cover rounded-md transition-transform',
-                    )}
-                  />
-
-                  {series.numberUnread > 0 && (
-                    <div className="absolute top-0 right-0 bg-sky-500 px-1 mr-1 mt-1 min-w-5 rounded-md font-semibold text-white text-center">
-                      {series.numberUnread}
+          <ContextMenu key={series.id}>
+            <ContextMenuTrigger asChild>
+              <article className={`library-book ${isSelected ? 'is-selected' : ''}`}>
+                <div className="library-artwork">
+                  <button
+                    className="block w-full rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={`${selecting ? 'Select' : 'View'} ${series.title}`}
+                    onClick={open}
+                  >
+                    <LibraryCover series={series} crop={crop || list} />
+                  </button>
+                  {selecting && (
+                    <div className="library-selection-check">
+                      <Checkbox
+                        aria-label={`Select ${series.title}`}
+                        checked={isSelected}
+                        onCheckedChange={() => toggle(series)}
+                      />
                     </div>
                   )}
-
-                  {libraryView === LibraryView.GridCompact && (
-                    <div
-                      className="absolute bottom-0 left-0 right-0 p-2 flex items-end"
-                      style={{
-                        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5)',
-                      }}
-                    >
-                      <span className="line-clamp-3 text-white text-xs font-bold">
-                        {series.title}
-                      </span>
-                    </div>
+                  {covers && !selecting && (
+                    <div className="library-covers-menu">{menu(series)}</div>
                   )}
                 </div>
-              </ContextMenuTrigger>
-              <LibraryGridContextMenu series={series} showRemoveModal={props.showRemoveModal} />
-            </ContextMenu>
-
-            {libraryView === LibraryView.GridComfortable && (
-              <div className="space-y-1 text-sm pb-3">
-                <h3 className="font-medium leading-none line-clamp-3">{series.title}</h3>
-              </div>
-            )}
-          </div>
+                {!covers && (
+                  <div className="library-book-info">
+                    <div className="flex items-start justify-between gap-2">
+                      <button
+                        className="min-w-0 py-1 text-left font-medium line-clamp-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        onClick={open}
+                      >
+                        {series.title}
+                      </button>
+                      {!selecting && menu(series)}
+                    </div>
+                    {list && (
+                      <p className="mb-2 text-caption text-muted-foreground">
+                        {Array.from(new Set([...series.authors, ...series.artists])).join('; ') ||
+                          'Unknown creator'}{' '}
+                        · {series.status}
+                      </p>
+                    )}
+                    <div className="mb-2 mt-1 flex flex-wrap items-center justify-between gap-2 text-caption text-muted-foreground">
+                      <span>
+                        {summary.total === 0
+                          ? 'No chapters'
+                          : summary.read === 0
+                            ? 'Not started'
+                            : summary.unread === 0
+                              ? 'Caught up'
+                              : `${summary.read} / ${summary.total} read`}
+                      </span>
+                      {summary.unread > 0 && <span>{summary.unread} unread</span>}
+                    </div>
+                    {summary.total > 0 && (
+                      <div
+                        role="progressbar"
+                        aria-label={`${series.title} reading progress`}
+                        aria-valuenow={summary.read}
+                        aria-valuemin={0}
+                        aria-valuemax={summary.total}
+                        className="h-1 overflow-hidden rounded-full bg-muted"
+                      >
+                        <div
+                          className={`h-full ${summary.unread === 0 ? 'bg-success' : 'bg-primary'}`}
+                          style={{ width: `${(summary.read / summary.total) * 100}%` }}
+                        />
+                      </div>
+                    )}
+                    {list && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {categories
+                          .filter((c) => series.categories?.includes(c.id))
+                          .map((c) => (
+                            <Badge key={c.id} variant="outline">
+                              {c.label}
+                            </Badge>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {list && !selecting && (
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      summary.next ? continueReading(series) : goToSeries(series, navigate)
+                    }
+                  >
+                    {!summary.next ? 'View series' : summary.read ? 'Continue' : 'Start reading'}
+                  </Button>
+                )}
+              </article>
+            </ContextMenuTrigger>
+            <LibraryGridContextMenu series={series} showRemoveModal={showRemoveModal} />
+          </ContextMenu>
         );
       })}
     </div>
   );
-};
-
-export default LibraryGrid;
+}

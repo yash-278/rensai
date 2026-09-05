@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "electron-vite dev",
     "dev:sources": "node scripts/dev-sources.cjs",
+    "test:library": "node --test tests/reading-progress.test.cjs",
     "test:sources": "node --test tests/local-source-provider.test.cjs",
     "smoke:sources": "electron scripts/smoke-sources.cjs",
     "build": "electron-vite build",
@@ -19,7 +20,9 @@
     "dist:linux": "pnpm electron-builder --publish onTagOrDraft --linux",
     "design:preview": "vite --config design-system/vite.config.ts",
     "design:build": "vite build --config design-system/vite.config.ts",
-    "design:check": "tsc --noEmit --project design-system/tsconfig.json && pnpm design:build && electron design-system/check.cjs && electron design-system/check-search.cjs"
+    "design:check": "tsc --noEmit --project design-system/tsconfig.json && pnpm design:build && electron design-system/check.cjs && electron design-system/check-search.cjs && electron design-system/check-library.cjs && electron design-system/check-series.cjs && electron design-system/check-downloads.cjs && electron design-system/check-sources.cjs && electron design-system/check-settings.cjs",
+    "test:downloads": "node --test tests/downloader.test.cjs",
+    "test:source-settings": "node --test tests/source-settings.test.cjs"
   },
   "build": {
     "productName": "Houdoku",

@@ -1,7 +1,8 @@
-import React from 'react';
+import { Series } from '@tiyo/common';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { markChapters, reloadSeriesList } from '@/renderer/features/library/utils';
+import { markChapters } from '@/renderer/features/library/utils';
 import {
+  activeSeriesListState,
   categoryListState,
   chapterListState,
   multiSelectEnabledState,
@@ -13,104 +14,110 @@ import {
 import { chapterLanguagesState } from '@/renderer/state/settingStates';
 import library from '@/renderer/services/library';
 import { Button } from '@houdoku/ui/components/Button';
-import { CheckCheck, Loader2, TagsIcon } from 'lucide-react';
+import { Checkbox } from '@houdoku/ui/components/Checkbox';
+import { CheckCheck, RefreshCw, Tags } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@houdoku/ui/components/DropdownMenu';
 import { Category } from '@/common/models/types';
 
-type Props = {
-  showAssignCategoriesModal: () => void;
-};
-
-const LibraryControlBarMultiSelect: React.FC<Props> = () => {
+export default function LibraryControlBarMultiSelect({
+  shown,
+  refresh,
+}: { shown: Series[]; refresh: (series: Series[]) => Promise<void> }) {
   const setSeries = useSetRecoilState(seriesState);
   const setSeriesList = useSetRecoilState(seriesListState);
   const setChapterList = useSetRecoilState(chapterListState);
-  const [reloadingSeriesList, setReloadingSeriesList] = useRecoilState(reloadingSeriesListState);
-  const chapterLanguages = useRecoilValue(chapterLanguagesState);
-  const setMultiSelectEnabled = useSetRecoilState(multiSelectEnabledState);
-  const multiSelectSeriesList = useRecoilValue(multiSelectSeriesListState);
+  const refreshing = useRecoilValue(reloadingSeriesListState);
+  const languages = useRecoilValue(chapterLanguagesState);
+  const setSelecting = useSetRecoilState(multiSelectEnabledState);
+  const [selection, setSelection] = useRecoilState(multiSelectSeriesListState);
+  const active = useRecoilValue(activeSeriesListState);
+  const selected = active.filter((s) => selection.some((item) => item.id === s.id));
   const categories = useRecoilValue(categoryListState);
-
-  const refreshHandler = () => {
-    setMultiSelectEnabled(false);
-    if (!reloadingSeriesList) {
-      reloadSeriesList(
-        multiSelectSeriesList,
-        setSeriesList,
-        setReloadingSeriesList,
-        chapterLanguages,
-      );
-    }
+  const done = () => {
+    setSelecting(false);
+    setSelection([]);
   };
-
-  const markAllReadHandler = () => {
-    setMultiSelectEnabled(false);
-    multiSelectSeriesList.forEach((series) => {
-      if (series.id) {
-        const chapters = library.fetchChapters(series.id!);
-        markChapters(chapters, series, true, setChapterList, setSeries, chapterLanguages);
-        setSeriesList(library.fetchSeriesList());
-      }
-    });
-  };
-
-  const assignCategory = (category: Category) => {
-    setMultiSelectEnabled(false);
-    multiSelectSeriesList.forEach((series) => {
-      const newCategories = series.categories
-        ? Array.from(new Set([...series.categories, category.id]))
-        : [category.id];
-      library.upsertSeries({ ...series, categories: newCategories });
+  const markRead = () => {
+    selected.forEach((series) => {
+      if (series.id)
+        markChapters(
+          library.fetchChapters(series.id),
+          series,
+          true,
+          setChapterList,
+          setSeries,
+          languages,
+        );
     });
     setSeriesList(library.fetchSeriesList());
+    done();
   };
-
+  const assign = (category: Category) => {
+    selected.forEach((series) =>
+      library.upsertSeries({
+        ...series,
+        categories: Array.from(new Set([...(series.categories || []), category.id])),
+      }),
+    );
+    setSeriesList(library.fetchSeriesList());
+    done();
+  };
+  const all = shown.length > 0 && shown.every((s) => selected.some((item) => item.id === s.id));
+  const some = shown.some((s) => selected.some((item) => item.id === s.id));
   return (
-    <div className="flex justify-between flex-nowrap py-3">
-      <div className="flex gap-3 flex-nowrap">
-        <Button disabled={reloadingSeriesList} onClick={refreshHandler}>
-          {reloadingSeriesList && <Loader2 className="animate-spin" />}
-          {reloadingSeriesList ? 'Refreshing...' : 'Refresh'}{' '}
+    <footer className="library-bulk-actions" aria-label="Selected series actions">
+      <div className="flex items-center gap-3">
+        <Checkbox
+          aria-label="Select all shown series"
+          checked={all ? true : some ? 'indeterminate' : false}
+          onCheckedChange={(checked) =>
+            setSelection(
+              checked === true
+                ? [...selected.filter((s) => !shown.some((item) => item.id === s.id)), ...shown]
+                : selected.filter((s) => !shown.some((item) => item.id === s.id)),
+            )
+          }
+        />
+        <span>{selected.length} selected</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant="outline"
+          disabled={!selected.length || refreshing}
+          onClick={() => refresh(selected)}
+        >
+          <RefreshCw />
+          Refresh selected
         </Button>
-
-        <Button onClick={markAllReadHandler} variant="outline">
+        <Button variant="outline" disabled={!selected.length || refreshing} onClick={markRead}>
           <CheckCheck />
-          Mark selected read
+          Mark read
         </Button>
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              <TagsIcon className="w-4 h-4" />
+            <Button
+              variant="outline"
+              disabled={!selected.length || refreshing || !categories.length}
+            >
+              <Tags />
               Assign category
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-44">
-            <DropdownMenuLabel>Categories</DropdownMenuLabel>
-            <DropdownMenuGroup>
-              {categories.map((category) => (
-                <DropdownMenuItem key={category.id} onSelect={() => assignCategory(category)}>
-                  {category.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuGroup>
+          <DropdownMenuContent>
+            {categories.map((c) => (
+              <DropdownMenuItem key={c.id} onSelect={() => assign(c)}>
+                {c.label}
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        <Button onClick={done}>Done</Button>
       </div>
-
-      <div className="flex gap-3 flex-nowrap justify-end">
-        <span className="self-center">{multiSelectSeriesList.length} series selected</span>
-        <Button onClick={() => setMultiSelectEnabled(false)}>Exit multi-select</Button>
-      </div>
-    </div>
+    </footer>
   );
-};
-
-export default LibraryControlBarMultiSelect;
+}

@@ -1,0 +1,14 @@
+.library-live-fixture {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  height: 100dvh;
+  overflow: hidden;
+}
+@media (max-width: 800px) {
+  .library-live-fixture {
+    grid-template-columns: 1fr;
+  }
+  .library-live-fixture > aside {
+    display: none;
+  }
+}

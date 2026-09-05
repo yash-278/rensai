@@ -240,9 +240,8 @@ function getSettingTypes(extensionId: string): { [key: string]: SettingType } {
 
   try {
     return extension.getSettingTypes();
-  } catch (err) {
-    console.error(err);
-    return {};
+  } catch {
+    throw new Error('Could not read source settings.');
   }
 }
 
@@ -258,9 +257,8 @@ function getSettings(extensionId: string): { [key: string]: unknown } {
 
   try {
     return extension.getSettings();
-  } catch (err) {
-    console.error(err);
-    return {};
+  } catch {
+    throw new Error('Could not read source settings.');
   }
 }
 
@@ -276,8 +274,8 @@ function setSettings(extensionId: string, settings: { [key: string]: unknown }):
 
   try {
     extension.setSettings(settings);
-  } catch (err) {
-    console.error(err);
+  } catch {
+    throw new Error('Could not apply source settings.');
   }
 }
 
@@ -301,9 +299,8 @@ function getFilterOptions(extensionId: string): FilterOption[] {
 export const createExtensionIpcHandlers = (ipcMain: IpcMain, spoofWindow: BrowserWindow) => {
   console.debug('Creating extension IPC handlers in main...');
 
-  ipcMain.handle(ipcChannels.EXTENSION_MANAGER.RELOAD, async (event) => {
+  ipcMain.handle(ipcChannels.EXTENSION_MANAGER.RELOAD, async () => {
     await loadPlugins(spoofWindow);
-    return event.sender.send(ipcChannels.APP.LOAD_STORED_EXTENSION_SETTINGS);
   });
   ipcMain.handle(ipcChannels.EXTENSION_MANAGER.GET, async (_event, extensionId: string) => {
     if (extensionId === FS_METADATA.id) {
