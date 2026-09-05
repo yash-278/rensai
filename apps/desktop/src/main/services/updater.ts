@@ -23,7 +23,7 @@ export const createUpdaterIpcHandlers = (ipcMain: IpcMain) => {
           console.info(`Already up-to-date at version ${packageJson.version}`);
           event.sender.send(
             ipcChannels.APP.SEND_NOTIFICATION,
-            'Houdoku is up-to-date!',
+            'Rensai is up-to-date!',
             'You are using the latest version.',
           );
           return;

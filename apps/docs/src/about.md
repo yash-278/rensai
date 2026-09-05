@@ -11,7 +11,7 @@ The website introduces the desktop application and provides reader guides. Readi
 
 ## Built from Houdoku
 
-Rensai continues the work of [Houdoku](https://github.com/xgi/houdoku) and its contributors. The library screenshots on this site show the inherited Houdoku desktop interface. The landing-page illustration is artwork, not an application screenshot.
+Rensai continues the work of [Houdoku](https://github.com/xgi/houdoku) and its contributors. The library screenshots show the current Rensai desktop interface with fictional sample titles. The landing-page illustration is artwork, not an application screenshot.
 
 Rensai keeps the original project's history, MIT license, and copyright notices. It is maintained independently under the Rensai name.
 

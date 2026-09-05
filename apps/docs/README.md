@@ -1,6 +1,6 @@
 # Rensai website
 
-The Rensai landing page and reader guides use VitePress. The homepage implements the approved Sequence prototype from `prototype/successor-identity` at `f643c92`. Its campaign image is served as a 117 KB WebP, and the library preview uses the inherited desktop screenshots.
+The Rensai landing page and reader guides use VitePress. The homepage implements the approved Sequence prototype from `prototype/successor-identity` at `f643c92`. Its campaign image is served as a 117 KB WebP, and the library preview uses captures of the current production Library, sidebar, and title bar with fictional sample titles.
 
 ## Local development
 
@@ -50,10 +50,21 @@ docker build -f apps/docs/Dockerfile -t rensai-website .
 docker run --rm -p 8080:8080 rensai-website
 ```
 
-The initial Railway deployment tracks `codex/rensai-web-presence` so it can be reviewed before merging. After merging the website PR, switch the service's source branch to `rensai`. Watch patterns cover `/apps/docs/**`, `/package.json`, `/pnpm-lock.yaml`, `/pnpm-workspace.yaml`, `/patches/**`, and `/LICENSE.txt`. Only changes to these website build inputs trigger a deployment.
+The Railway service tracks the `rensai` branch of `yash-278/rensai`. Watch patterns cover `/apps/docs/**`, `/package.json`, `/pnpm-lock.yaml`, `/pnpm-workspace.yaml`, `/patches/**`, and `/LICENSE.txt`. Only changes to these website build inputs trigger a deployment.
 
 Railway bills for runtime resources and bandwidth. One replica serves the static site. The downloadable build archive is optional and is not used by Railway.
 
 ## Review
 
 Check the homepage in light and dark themes, theme persistence across navigation and reload, the guide search, content tabs, mobile navigation, and direct loads of every guide URL. Keep the original Houdoku license unchanged.
+
+## Refresh the library screenshots
+
+The capture uses the real desktop dashboard and Library components, a fictional library, and a disposable Electron profile with network requests blocked. It captures both themes at 1440 × 900 without touching user data.
+
+```sh
+pnpm --filter @houdoku/desktop design:build
+pnpm --filter @houdoku/desktop exec electron design-system/capture-website.cjs
+```
+
+The command prints its temporary output directory. Convert `library-dark.png` and `library-light.png` from that directory with `cwebp -q 90 -m 6`, saving them as `src/public/rensai-library-dark.webp` and `src/public/rensai-library-light.webp` in the docs workspace. Keep the homepage's dimensions and sample-content caption accurate.

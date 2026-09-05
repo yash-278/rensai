@@ -1,5 +1,6 @@
 // Actual Library component and storage service, synthetic data, explicit offline IPC.
 import { createRoot } from 'react-dom/client';
+import path from 'path';
 import { useEffect } from 'react';
 import { MemoryRouter, Routes, Route, useLocation, Link } from 'react-router-dom';
 import { RecoilRoot, useRecoilValue, useSetRecoilState } from 'recoil';
@@ -13,6 +14,8 @@ import {
   libraryColumnsState,
   libraryViewState,
   confirmRemoveSeriesState,
+  autoBackupState,
+  refreshOnStartState,
 } from '../src/renderer/state/settingStates';
 import './style.css';
 import './library-fixture.css';
@@ -95,6 +98,7 @@ const review = {
 Object.assign(window, {
   review,
   require: (name: string) => {
+    if (name === 'path') return path;
     if (name === 'fs')
       return {
         existsSync: (path: string) => path === '/offline-review',
@@ -108,6 +112,8 @@ Object.assign(window, {
         invoke: async (channel: string, ...args: unknown[]) => {
           review.calls.push({ channel, args });
           switch (channel) {
+            case ipc.GET_PATH.DEFAULT_DOWNLOADS_DIR:
+              return '/offline-review/downloads';
             case ipc.GET_PATH.THUMBNAILS_DIR:
               return '/offline-review';
             case ipc.EXTENSION_MANAGER.GET:
@@ -146,7 +152,33 @@ function Observe() {
   }, [location, series]);
   return null;
 }
-import('../src/renderer/components/library/Library').then(({ default: Library }) =>
+const websiteCapture = new URLSearchParams(location.search).has('website-capture');
+if (websiteCapture) {
+  // Use the production application shell, with the same synthetic library as this fixture.
+  Promise.all([
+    import('../src/renderer/components/general/DashboardPage'),
+    import('../src/renderer/components/general/Titlebar'),
+    import('../src/renderer/App.global.css'),
+  ]).then(([{ default: DashboardPage }, { Titlebar }]) => {
+    const mount = document.getElementById('root')!;
+    mount.id = 'website-capture';
+    createRoot(mount).render(
+      <RecoilRoot initializeState={({ set }) => {
+        set(categoryListState, categories);
+        set(chapterLanguagesState, [LanguageKey.ENGLISH]);
+        set(libraryColumnsState, 0);
+        set(libraryViewState, LibraryView.GridComfortable);
+        set(refreshOnStartState, false);
+        set(autoBackupState, false);
+      }}>
+        <MemoryRouter>
+          <header id="titlebar"><Titlebar /></header>
+          <div id="root"><DashboardPage /></div>
+        </MemoryRouter>
+      </RecoilRoot>,
+    );
+  });
+} else import('../src/renderer/components/library/Library').then(({ default: Library }) =>
   createRoot(document.getElementById('root')!).render(
     <RecoilRoot
       initializeState={({ set }) => {

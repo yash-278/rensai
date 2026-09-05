@@ -458,7 +458,7 @@ export default function Plugins() {
                 Development startup could not find Rensai Sources. Run the source-enabled
                 development command, then reload.
               </p>
-              <code>pnpm --filter @houdoku/desktop dev:sources</code>
+              <code>pnpm --dir apps/desktop dev:sources</code>
             </details>
             <Button onClick={() => load(true)}>Try again</Button>
           </section>

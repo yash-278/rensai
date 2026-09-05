@@ -57,7 +57,7 @@ export async function loadPlugins(spoofWindow: BrowserWindow) {
   } else {
     LOCAL_PROVIDER_STATUS = {
       error:
-        'Rensai Sources is not configured. Start development with pnpm --filter @houdoku/desktop dev:sources.',
+        'Rensai Sources is not configured. Start development with pnpm --dir apps/desktop dev:sources.',
     };
   }
 

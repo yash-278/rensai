@@ -12,7 +12,7 @@ export const createBackup = async () => {
 
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `houdoku_backup_${new Date().toJSON().slice(0, 10)}.json`;
+  link.download = `rensai_backup_${new Date().toJSON().slice(0, 10)}.json`;
 
   document.body.appendChild(link);
   link.click();
@@ -23,7 +23,7 @@ export const createAutoBackup = async (Count = 1) => {
   if (!fs.existsSync('backups')) {
     fs.mkdir('backups');
   }
-  const fileName = `houdoku_backup_${new Date().toJSON().slice(0, 10)}.json`;
+  const fileName = `rensai_backup_${new Date().toJSON().slice(0, 10)}.json`;
   if (!fs.existsSync(`backups/${fileName}`)) {
     let jsondata = JSON.stringify(localStorage);
     jsondata = JSON.parse(jsondata);

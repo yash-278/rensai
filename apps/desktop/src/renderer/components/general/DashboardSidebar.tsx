@@ -230,7 +230,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                     className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                   >
                     <span className="truncate font-semibold text-sm">
-                      Houdoku v{packageJson.version}
+                      Rensai v{packageJson.version}
                     </span>
                     <Info className="ml-auto size-4" />
                   </SidebarMenuButton>
@@ -246,28 +246,24 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                       Check for updates
                     </DropdownMenuItem>
                     <DialogTrigger asChild>
-                      <DropdownMenuItem>About Houdoku</DropdownMenuItem>
+                      <DropdownMenuItem>About Rensai</DropdownMenuItem>
                     </DialogTrigger>
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>About Houdoku</DialogTitle>
+                  <DialogTitle>About Rensai</DialogTitle>
                   <DialogDescription>v{packageJson.version}</DialogDescription>
                 </DialogHeader>
                 <div>
                   <p>
-                    Houdoku is a desktop manga reader. To add a series to your library, click the{' '}
+                    Rensai is a desktop manga reader. To add a series to your library, click the{' '}
                     <code className="relative bg-muted px-[0.3rem] py-[0.2rem] text-sm font-semibold">
                       Add Series
                     </code>{' '}
                     tab on the left panel and search for the series from a supported content source.
-                    To add more content sources, install a{' '}
-                    <code className="relative bg-muted px-[0.3rem] py-[0.2rem] text-sm font-semibold">
-                      Plugin
-                    </code>
-                    .
+                    Configure available sources and their accounts on the Sources page.
                   </p>
                 </div>
                 <DialogFooter>

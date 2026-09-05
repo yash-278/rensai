@@ -108,7 +108,7 @@ export default function App() {
           </AlertDialogHeader>
           {updateInfo && (
             <p>
-              Houdoku v{updateInfo?.version} was released on{' '}
+              Rensai v{updateInfo?.version} was released on{' '}
               {new Date(updateInfo.releaseDate).toLocaleDateString()}.
             </p>
           )}
@@ -127,7 +127,7 @@ export default function App() {
             <AlertDialogTitle>Restart required</AlertDialogTitle>
             {updateInfo && (
               <AlertDialogDescription>
-                Houdoku needs to restart to finish installing updates.
+                Rensai needs to restart to finish installing updates.
               </AlertDialogDescription>
             )}
           </AlertDialogHeader>

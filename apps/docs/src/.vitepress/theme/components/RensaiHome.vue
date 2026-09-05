@@ -144,22 +144,22 @@ onMounted(() => {
           <div>
             <img
               class="library-dark"
-              src="/screenshot_library_dark.webp"
-              alt="Desktop library with series covers, unread counts, and filters"
+              src="/rensai-library-dark.webp"
+              alt="Rensai library in dark mode with sample series, reading progress, and filters"
               width="1440"
               height="900"
               loading="lazy"
             /><img
               class="library-light"
-              src="/screenshot_library_light.webp"
-              alt="Desktop library in light mode with series covers, unread counts, and filters"
+              src="/rensai-library-light.webp"
+              alt="Rensai library in light mode with sample series, reading progress, and filters"
               width="1440"
               height="900"
               loading="lazy"
             />
           </div>
           <figcaption>
-            Library preview from the inherited desktop app.
+            The current Rensai library, shown with fictional sample titles.
           </figcaption>
         </figure>
       </section>

@@ -80,7 +80,7 @@ function BackupActions() {
       const paths: string[] = await ipcRenderer.invoke(
         ipc.APP.SHOW_OPEN_DIALOG,
         false,
-        [{ name: 'Houdoku Backup', extensions: ['json'] }],
+        [{ name: 'Rensai Backup', extensions: ['json'] }],
         'Select backup file',
       );
       if (!Array.isArray(paths)) throw Error('Picker failed');
@@ -97,7 +97,7 @@ function BackupActions() {
       setConfirmation(false);
     } catch {
       setError(
-        'Could not restore the backup. Check that the file is a valid Houdoku backup and try again.',
+        'Could not restore the backup. Check that the file is a valid Rensai backup and try again.',
       );
     } finally {
       setBusy(false);

@@ -1,6 +1,6 @@
 {
   "name": "@houdoku/desktop",
-  "productName": "Houdoku",
+  "productName": "Rensai",
   "description": "Manga reader and library manager for the desktop",
   "version": "2.16.0",
   "private": true,
@@ -22,10 +22,11 @@
     "design:build": "vite build --config design-system/vite.config.ts",
     "design:check": "tsc --noEmit --project design-system/tsconfig.json && pnpm design:build && electron design-system/check.cjs && electron design-system/check-search.cjs && electron design-system/check-library.cjs && electron design-system/check-series.cjs && electron design-system/check-downloads.cjs && electron design-system/check-sources.cjs && electron design-system/check-settings.cjs",
     "test:downloads": "node --test tests/downloader.test.cjs",
-    "test:source-settings": "node --test tests/source-settings.test.cjs"
+    "test:source-settings": "node --test tests/source-settings.test.cjs",
+    "test:identity": "node --test tests/app-identity.test.cjs"
   },
   "build": {
-    "productName": "Houdoku",
+    "productName": "Rensai",
     "appId": "com.faltro.Houdoku",
     "files": [
       "out/**/*"
@@ -97,13 +98,13 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "xgi",
-      "repo": "houdoku"
+      "owner": "yash-278",
+      "repo": "rensai"
     }
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/xgi/houdoku"
+    "url": "https://github.com/yash-278/rensai"
   },
   "author": {
     "name": "xgi",
@@ -112,7 +113,7 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/xgi/houdoku/issues"
+    "url": "https://github.com/yash-278/rensai/issues"
   },
   "keywords": [
     "manga",
@@ -123,7 +124,7 @@
     "typescript",
     "ts"
   ],
-  "homepage": "https://houdoku.org",
+  "homepage": "https://rensai.yashkadam.com",
   "dependencies": {
     "@biomejs/biome": "1.9.4",
     "@houdoku/ui": "workspace:*",

@@ -1,5 +1,6 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
+import './util/appIdentity';
 import fs from 'fs';
 import path, { join } from 'path';
 import {
@@ -25,7 +26,7 @@ import { createFilesystemIpcHandlers } from './services/filesystem';
 
 log.transports.file.resolvePath = () => path.join(LOGS_DIR, 'main.log');
 
-console.info(`Starting Houdoku main process (client version ${packageJson.version})`);
+console.info(`Starting Rensai main process (client version ${packageJson.version})`);
 
 let mainWindow: BrowserWindow | null = null;
 let spoofWindow: BrowserWindow | null = null;
@@ -58,6 +59,7 @@ const createWindows = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
+    title: packageJson.productName,
     width: 1024,
     height: 728,
     minWidth: 250,
@@ -92,6 +94,7 @@ const createWindows = async () => {
 
   spoofWindow = new BrowserWindow({
     show: false,
+    title: packageJson.productName,
     width: 1024,
     height: 728,
   });
