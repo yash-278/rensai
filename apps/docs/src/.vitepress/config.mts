@@ -64,7 +64,7 @@ export default defineConfig({
       },
       {
         text: "Repository",
-        link: "https://github.com/yash-278/houdoku",
+        link: "https://github.com/yash-278/rensai",
       },
       {
         text: "Guides",
@@ -96,7 +96,7 @@ export default defineConfig({
         'Free and open source. <a href="/about">About Rensai and its license</a>.',
     },
     socialLinks: [
-      { icon: "github", link: "https://github.com/yash-278/houdoku" },
+      { icon: "github", link: "https://github.com/yash-278/rensai" },
     ],
 
     search: {

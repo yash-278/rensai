@@ -40,7 +40,7 @@ onMounted(() => {
         </button>
         <a
           class="source-link"
-          href="https://github.com/yash-278/houdoku"
+          href="https://github.com/yash-278/rensai"
           target="_blank"
           rel="noreferrer"
           >Source <span class="arrow" aria-hidden="true">↗</span></a
@@ -263,7 +263,7 @@ onMounted(() => {
         <a href="/guides/getting-started">Guides</a
         ><a href="/about">About &amp; license</a
         ><a
-          href="https://github.com/yash-278/houdoku"
+          href="https://github.com/yash-278/rensai"
           target="_blank"
           rel="noreferrer"
           >GitHub</a

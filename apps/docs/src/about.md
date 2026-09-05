@@ -17,11 +17,11 @@ Rensai keeps the original project's history, MIT license, and copyright notices.
 
 ## License
 
-The inherited Houdoku code is licensed under the [MIT License](https://github.com/yash-278/houdoku/blob/rensai/LICENSE.txt). The license permits use, modification, and redistribution subject to retaining the copyright and permission notices. See the license file for its complete terms.
+The inherited Houdoku code is licensed under the [MIT License](https://github.com/yash-278/rensai/blob/rensai/LICENSE.txt). The license permits use, modification, and redistribution subject to retaining the copyright and permission notices. See the license file for its complete terms.
 
 ## Project links
 
-- [Rensai source code](https://github.com/yash-278/houdoku/tree/rensai)
-- [Issues and bug reports](https://github.com/yash-278/houdoku/issues)
-- [Releases](https://github.com/yash-278/houdoku/releases)
+- [Rensai source code](https://github.com/yash-278/rensai/tree/rensai)
+- [Issues and bug reports](https://github.com/yash-278/rensai/issues)
+- [Releases](https://github.com/yash-278/rensai/releases)
 - [Reader guides](/guides/getting-started)

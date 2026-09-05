@@ -35,11 +35,24 @@ All inherited public page paths are retained:
 
 The source guide describes the `rensai-source-provider` integration branch. Merge the website alongside that integration when preparing the product branch. The website itself does not depend on the provider at build time.
 
-## Hosting later
+## Railway deployment
 
-The intended canonical URL is `https://rensai.yashkadam.com`, configured in `.vitepress/config.mts` for page metadata and the sitemap. Deployment and DNS changes are separate work.
+The canonical URL is `https://rensai.yashkadam.com`. VitePress uses it for metadata and the sitemap.
 
-Vercel supports VitePress directly. The website build command is `corepack pnpm --filter @houdoku/docs build`, run from the repository root, and the output directory is `apps/docs/src/.vitepress/dist`. Serve clean URLs so `/download` resolves to `download.html`, and use `404.html` for missing pages. The same static output can be served on Railway.
+Railway builds `apps/docs/Dockerfile` from the repository root. The service's Dockerfile path is `apps/docs/Dockerfile`, its health check is `/` with a 60-second timeout, and it runs one replica. Railway's live API no longer accepts the old `railway.json` config-file setting, so these values are configured directly on the service. The build uses Node 24 and the repository-pinned pnpm 9.0.0. Only the docs workspace and its build inputs enter the Docker context. The runtime image serves the generated files with Caddy, with no database, desktop dependencies, or Node process.
+
+`apps/docs/Caddyfile` serves clean URLs, compresses responses, caches versioned assets, and returns the generated error page with HTTP 404. Railway terminates HTTPS and forwards requests to the container's `PORT`, defaulting to 8080 for local runs. The health check requests `/` before a deployment receives traffic.
+
+To build and run the production image locally:
+
+```sh
+docker build -f apps/docs/Dockerfile -t rensai-website .
+docker run --rm -p 8080:8080 rensai-website
+```
+
+The initial Railway deployment tracks `codex/rensai-web-presence` so it can be reviewed before merging. After merging the website PR, switch the service's source branch to `rensai`. Watch patterns cover `/apps/docs/**`, `/package.json`, `/pnpm-lock.yaml`, `/pnpm-workspace.yaml`, `/patches/**`, and `/LICENSE.txt`. Only changes to these website build inputs trigger a deployment.
+
+Railway bills for runtime resources and bandwidth. One replica serves the static site. The downloadable build archive is optional and is not used by Railway.
 
 ## Review
 

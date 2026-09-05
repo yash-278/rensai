@@ -10,7 +10,7 @@ Rensai Sources supplies the website sources shown in **Add Series**. It is the o
 
 Website sources currently require a local development build of Rensai Sources. They are not distributed through a public plugin installer yet.
 
-Follow the [local provider setup](https://github.com/yash-278/houdoku/blob/rensai-source-provider/docs/local-source-provider.md) to build and load the provider. In a configured development checkout, `pnpm --filter @houdoku/desktop dev:sources` starts the app with the built sibling provider. An explicit `RENSAI_SOURCES_PATH` can point to another provider build directory.
+Follow the [local provider setup](https://github.com/yash-278/rensai/blob/rensai-source-provider/docs/local-source-provider.md) to build and load the provider. In a configured development checkout, `pnpm --filter @houdoku/desktop dev:sources` starts the app with the built sibling provider. An explicit `RENSAI_SOURCES_PATH` can point to another provider build directory.
 
 Open **Extensions** to check the provider status. A loaded provider shows its version and source count. If it cannot load, this page reports the error; local files remain available.
 
@@ -31,6 +31,6 @@ After rebuilding or changing the provider, select **Reload Sources**. Use **Refr
 
 A source in the list is not a guarantee that its website is reachable. Websites can change, restrict access, or go offline.
 
-Check the provider status first. If it is loaded but one website fails, try opening that website in your browser and check the [project issues](https://github.com/yash-278/houdoku/issues) for reported problems. Include the source name and the failed action when reporting an issue. Do not include account details or private library data.
+Check the provider status first. If it is loaded but one website fails, try opening that website in your browser and check the [project issues](https://github.com/yash-278/rensai/issues) for reported problems. Include the source name and the failed action when reporting an issue. Do not include account details or private library data.
 
 To save available chapters ahead of time, see [Offline downloads](../offline-download).
