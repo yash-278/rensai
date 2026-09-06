@@ -25,6 +25,7 @@
   },
   "GET_ALL_FILES": "get-all-files",
   "EXTENSION_MANAGER": {
+    "UPDATE_SOURCES": "extension-manager-update-sources",
     "RELOAD": "extension-manager-reload",
     "GET": "extension-manager-get",
     "GET_ALL": "extension-manager-get-all",

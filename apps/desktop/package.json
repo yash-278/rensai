@@ -15,25 +15,31 @@
     "preview": "electron-vite preview",
     "lint": "biome lint src",
     "check-types": "tsc --noEmit",
-    "dist:win": "pnpm electron-builder --publish onTagOrDraft --win",
-    "dist:mac": "pnpm electron-builder --publish onTagOrDraft --mac",
-    "dist:linux": "pnpm electron-builder --publish onTagOrDraft --linux",
+    "dist:win": "pnpm sources:prepare && pnpm electron-builder --publish onTagOrDraft --win",
+    "dist:mac": "pnpm sources:prepare && pnpm electron-builder --publish onTagOrDraft --mac",
+    "dist:linux": "pnpm sources:prepare && pnpm electron-builder --publish onTagOrDraft --linux",
     "design:preview": "vite --config design-system/vite.config.ts",
     "design:build": "vite build --config design-system/vite.config.ts",
     "design:check": "tsc --noEmit --project design-system/tsconfig.json && pnpm design:build && electron design-system/check.cjs && electron design-system/check-search.cjs && electron design-system/check-library.cjs && electron design-system/check-series.cjs && electron design-system/check-downloads.cjs && electron design-system/check-sources.cjs && electron design-system/check-settings.cjs",
     "test:downloads": "node --test tests/downloader.test.cjs",
     "test:source-settings": "node --test tests/source-settings.test.cjs",
-    "test:identity": "node --test tests/app-identity.test.cjs"
+    "test:identity": "node --test tests/app-identity.test.cjs",
+    "sources:prepare": "node scripts/prepare-sources.cjs",
+    "test:source-updates": "node --test tests/source-updates.test.cjs",
+    "pack:mac": "pnpm sources:prepare && pnpm build && electron-builder --mac --dir --publish never",
+    "test": "node --test tests/*.test.cjs",
+    "smoke:packaged": "node scripts/smoke-packaged.cjs"
   },
   "build": {
     "productName": "Rensai",
-    "appId": "com.faltro.Houdoku",
+    "appId": "com.yashkadam.rensai",
     "files": [
       "out/**/*"
     ],
     "mac": {
       "target": [
-        "dmg"
+        "dmg",
+        "zip"
       ],
       "type": "development",
       "hardenedRuntime": false,
@@ -94,13 +100,18 @@
       "output": "release"
     },
     "extraResources": [
-      "./assets/**"
+      "./assets/**",
+      {
+        "from": "build/bundled-sources",
+        "to": "rensai-sources"
+      }
     ],
     "publish": {
       "provider": "github",
       "owner": "yash-278",
       "repo": "rensai"
-    }
+    },
+    "beforePack": "./scripts/check-bundled-sources.cjs"
   },
   "repository": {
     "type": "git",
@@ -205,10 +216,5 @@
   },
   "optionalDependencies": {
     "dmg-license": "^1.0.11"
-  },
-  "pnpm": {
-    "overrides": {
-      "@electron/rebuild": "3.7.0"
-    }
   }
 }

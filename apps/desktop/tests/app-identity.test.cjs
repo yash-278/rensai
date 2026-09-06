@@ -28,5 +28,7 @@ test('Rensai display name retains the existing profile and browser session', () 
     assert.equal(paths.sessionData, oldProfile);
     assert.equal(fs.readFileSync(path.join(oldProfile, 'saved-library'), 'utf8'), 'existing library');
     assert.equal(packageJson.build.productName, name);
+    assert.equal(packageJson.build.appId, 'com.yashkadam.rensai');
+    assert.deepEqual(packageJson.build.publish, { provider: 'github', owner: 'yash-278', repo: 'rensai' });
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });

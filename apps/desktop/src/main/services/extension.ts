@@ -18,10 +18,19 @@ import ipcChannels from '@/common/constants/ipcChannels.json';
 import { EXTRACT_DIR } from '../util/appdata';
 import { loadLocalSourceProvider, snapshotSourceProvider } from './local-source-provider';
 import type { LocalSourceProviderStatus } from '@/common/models/LocalSourceProviderStatus';
+import {
+  fetchSourceRelease,
+  fetchSourceBundle,
+  installedSourcePath,
+  installSourceBundle,
+  isNewerSourceVersion,
+} from './source-updates';
 
 let SOURCE_EXTENSIONS: ReturnType<TiyoClientInterface['getExtensions']> = {};
 let LOCAL_PROVIDER_STATUS: LocalSourceProviderStatus | undefined;
 let FILESYSTEM_EXTENSION: FSExtensionClient | null = null;
+let updatingSources = false;
+const sourceInstallRoot = () => join(app.getPath('userData'), 'rensai-sources');
 
 export async function loadPlugins(spoofWindow: BrowserWindow) {
   if (FILESYSTEM_EXTENSION !== null) {
@@ -30,9 +39,18 @@ export async function loadPlugins(spoofWindow: BrowserWindow) {
 
   SOURCE_EXTENSIONS = {};
   LOCAL_PROVIDER_STATUS = undefined;
-  const providerPath = app.isPackaged
-    ? join(process.resourcesPath, 'rensai-sources')
-    : process.env.RENSAI_SOURCES_PATH;
+  let providerPath: string | undefined;
+  try {
+    providerPath =
+      !app.isPackaged && process.env.RENSAI_SOURCES_PATH
+        ? process.env.RENSAI_SOURCES_PATH
+        : installedSourcePath(sourceInstallRoot()) ||
+          (app.isPackaged ? join(process.resourcesPath, 'rensai-sources') : undefined);
+  } catch {
+    LOCAL_PROVIDER_STATUS = {
+      error: 'The installed source record is invalid. Update Sources to repair it.',
+    };
+  }
   if (providerPath) {
     try {
       const provider = loadLocalSourceProvider(
@@ -54,7 +72,7 @@ export async function loadPlugins(spoofWindow: BrowserWindow) {
       };
       console.error('Could not load Rensai Sources:', error);
     }
-  } else {
+  } else if (!LOCAL_PROVIDER_STATUS) {
     LOCAL_PROVIDER_STATUS = {
       error:
         'Rensai Sources is not configured. Start development with pnpm --dir apps/desktop dev:sources.',
@@ -301,6 +319,44 @@ export const createExtensionIpcHandlers = (ipcMain: IpcMain, spoofWindow: Browse
 
   ipcMain.handle(ipcChannels.EXTENSION_MANAGER.RELOAD, async () => {
     await loadPlugins(spoofWindow);
+  });
+  ipcMain.handle(ipcChannels.EXTENSION_MANAGER.UPDATE_SOURCES, async () => {
+    if (updatingSources) throw Error('A source update is already running.');
+    if (!app.isPackaged && process.env.RENSAI_SOURCES_PATH) {
+      throw Error('Development is using a local provider. Rebuild it and reload sources.');
+    }
+    updatingSources = true;
+    try {
+      const release = await fetchSourceRelease();
+      let installedVersion = LOCAL_PROVIDER_STATUS?.version;
+      try {
+        const directory = installedSourcePath(sourceInstallRoot());
+        if (directory)
+          installedVersion = createRequire(__filename)(join(directory, 'package.json')).version;
+      } catch {
+        /* A new verified release can repair an invalid installation. */
+      }
+      if (
+        installedVersion &&
+        !isNewerSourceVersion(release.version, installedVersion) &&
+        !LOCAL_PROVIDER_STATUS?.error
+      ) {
+        return {
+          message: `Rensai Sources ${installedVersion} is already installed. Reload sources to use it.`,
+        };
+      }
+      const buffer = await fetchSourceBundle(release);
+      await installSourceBundle(sourceInstallRoot(), release, buffer, (directory) => {
+        const provider = loadLocalSourceProvider(directory, spoofWindow, createRequire(__filename));
+        if (!Object.keys(snapshotSourceProvider(provider)).length)
+          throw Error('The source bundle has no sources.');
+      });
+      return {
+        message: `Rensai Sources ${release.version} installed. Reload sources after any downloads finish, or restart the app.`,
+      };
+    } finally {
+      updatingSources = false;
+    }
   });
   ipcMain.handle(ipcChannels.EXTENSION_MANAGER.GET, async (_event, extensionId: string) => {
     if (extensionId === FS_METADATA.id) {

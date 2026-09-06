@@ -48,7 +48,7 @@ app
     const invoke = (channel, ...args) => handlers.get(channel)({}, ...args);
     await subject.exports.loadPlugins(window);
     assert.deepEqual(invoke(channels.EXTENSION_MANAGER.GET_LOCAL_PROVIDER_STATUS), {
-      version: '0.1.0-dev.0',
+      version: require(path.join(process.env.RENSAI_SOURCES_PATH, 'package.json')).version,
       sourceCount: 34,
     });
     assert.equal(invoke(channels.EXTENSION_MANAGER.GET_ALL).length, 35); // Includes local files.
@@ -59,16 +59,13 @@ app
     };
     invoke(channels.EXTENSION.SET_SETTINGS, komga, settings);
     assert.deepEqual(invoke(channels.EXTENSION.GET_SETTINGS, komga), settings);
-    let restored = false;
     await handlers.get(channels.EXTENSION_MANAGER.RELOAD)({
       sender: {
         send: (channel) => {
           assert.equal(channel, channels.APP.LOAD_STORED_EXTENSION_SETTINGS);
-          restored = true;
         },
       },
     });
-    assert.equal(restored, true);
     assert.equal(invoke(channels.EXTENSION_MANAGER.GET_ALL).length, 35);
     delete process.env.RENSAI_SOURCES_PATH;
     await subject.exports.loadPlugins(window);

@@ -5,7 +5,9 @@ import packageJson from '../../../package.json';
 
 // Keep the existing profile when changing the display name. Electron otherwise
 // derives a new userData/sessionData directory from productName and hides saved data.
-const profilePath = path.join(app.getPath('appData'), 'Houdoku');
+const profilePath =
+  process.env.RENSAI_USER_DATA_DIR || path.join(app.getPath('appData'), 'Houdoku');
+if (!path.isAbsolute(profilePath)) throw Error('RENSAI_USER_DATA_DIR must be an absolute path.');
 fs.mkdirSync(profilePath, { recursive: true });
 app.setPath('userData', profilePath);
 app.setPath('sessionData', profilePath);

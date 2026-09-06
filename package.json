@@ -24,6 +24,9 @@
   "pnpm": {
     "patchedDependencies": {
       "builder-util-runtime@8.9.2": "patches/builder-util-runtime@8.9.2.patch"
+    },
+    "overrides": {
+      "@electron/rebuild": "3.7.0"
     }
   }
 }

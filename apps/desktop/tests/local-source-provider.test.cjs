@@ -60,7 +60,7 @@ test(
   { skip: !process.env.RENSAI_SOURCES_PATH },
   () => {
     const provider = loadLocalSourceProvider(process.env.RENSAI_SOURCES_PATH, null, require);
-    assert.equal(provider.getVersion(), '0.1.0-dev.0');
+    assert.equal(provider.getVersion(), require(path.join(process.env.RENSAI_SOURCES_PATH, 'package.json')).version);
     const sources = snapshotSourceProvider(provider);
     assert.equal(Object.keys(sources).length, 34);
     assert.equal(sources['6b4e9df1-b369-4adc-8d36-fe954dd793e3'].metadata.name, 'MangaDex');

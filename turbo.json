@@ -45,8 +45,10 @@
         "release/**"
       ],
       "passThroughEnv": [
-        "GH_TOKEN"
-      ]
+        "GH_TOKEN",
+        "RENSAI_SOURCES_BUNDLE"
+      ],
+      "cache": false
     },
     "dist:mac": {
       "dependsOn": [
@@ -56,8 +58,10 @@
         "release/**"
       ],
       "passThroughEnv": [
-        "GH_TOKEN"
-      ]
+        "GH_TOKEN",
+        "RENSAI_SOURCES_BUNDLE"
+      ],
+      "cache": false
     },
     "dist:linux": {
       "dependsOn": [
@@ -67,8 +71,10 @@
         "release/**"
       ],
       "passThroughEnv": [
-        "GH_TOKEN"
-      ]
+        "GH_TOKEN",
+        "RENSAI_SOURCES_BUNDLE"
+      ],
+      "cache": false
     }
   }
 }

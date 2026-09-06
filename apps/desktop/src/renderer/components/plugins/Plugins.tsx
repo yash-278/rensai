@@ -50,6 +50,8 @@ export default function Plugins() {
   const [providerError, setProviderError] = useState('');
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [updateNotice, setUpdateNotice] = useState('');
   const [readingSettings, setReadingSettings] = useState(false);
   const [notice, setNotice] = useState('');
   const [detailOpen, setDetailOpen] = useState(false);
@@ -59,7 +61,23 @@ export default function Plugins() {
   const alive = useRef(true);
   const dirty = !!source && JSON.stringify(draft) !== JSON.stringify(source.values);
   const settingsError = source?.settingsError;
-  const busy = saving || readingSettings || provider === 'loading';
+  const busy = saving || updating || readingSettings || provider === 'loading';
+  const updateSources = async () => {
+    setUpdating(true);
+    setUpdateNotice('');
+    try {
+      const result = await ipcRenderer.invoke(ipc.EXTENSION_MANAGER.UPDATE_SOURCES);
+      setUpdateNotice(result.message);
+    } catch (error) {
+      setUpdateNotice(
+        error instanceof Error
+          ? error.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '')
+          : 'Could not update sources. Try again.',
+      );
+    } finally {
+      setUpdating(false);
+    }
+  };
   const readSource = async (metadata: ExtensionMetadata): Promise<Source> => {
     let types: Record<string, SettingType> = {};
     try {
@@ -408,11 +426,22 @@ export default function Plugins() {
             <h1 className="text-page-title">Sources</h1>
             <p className="text-muted-foreground mt-1">Find a source and manage how you connect.</p>
           </div>
-          <Button variant="outline" disabled={busy} onClick={() => request({ kind: 'reload' })}>
-            <RefreshCw className={provider === 'loading' ? 'animate-spin' : ''} />
-            {provider === 'loading' ? 'Reloading…' : 'Reload sources'}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" disabled={busy} onClick={updateSources}>
+              <RefreshCw className={updating ? 'animate-spin' : ''} />
+              {updating ? 'Updating…' : 'Update sources'}
+            </Button>
+            <Button variant="outline" disabled={busy} onClick={() => request({ kind: 'reload' })}>
+              <RefreshCw className={provider === 'loading' ? 'animate-spin' : ''} />
+              {provider === 'loading' ? 'Reloading…' : 'Reload sources'}
+            </Button>
+          </div>
         </header>
+        {updateNotice && (
+          <p role="status" className="text-sm mb-3">
+            {updateNotice}
+          </p>
+        )}
         <section
           className={`sources-provider ${provider === 'error' ? 'is-error' : ''}`}
           aria-label="Source provider"
